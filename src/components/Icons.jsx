@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Minimalist SVG Icons System for TinTom Simulator
+ * Minimalist SVG Icons System for Parrot Party
  * Clean, lightweight, vector-sharp icons replacing generic emojis.
  */
 

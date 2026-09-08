@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import { peerManager } from '../utils/peerManager';
-import tintomLogo from '../assets/tintom.png';
+import parrotLogo from '../assets/parrot-party.png';
 import { IconShare, IconCheck, IconLogOut, IconSettings } from './Icons';
 
 export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveRoom }) {
@@ -40,18 +40,18 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <img
-            src={tintomLogo}
-            alt="TinTom Simulator Logo"
+            src={parrotLogo}
+            alt="Parrot Party Logo"
             onError={(e) => {
-              e.currentTarget.src = `${import.meta.env.BASE_URL}images/tintom.png`;
+              e.currentTarget.src = `${import.meta.env.BASE_URL}images/parrot-party.png`;
             }}
             style={{
               width: 44,
               height: 44,
               borderRadius: 12,
               objectFit: 'cover',
-              objectPosition: 'top center',
-              boxShadow: '0 3px 10px rgba(244,132,95,0.35)',
+              objectPosition: 'center',
+              boxShadow: '0 3px 10px rgba(56, 189, 248, 0.25)',
               border: '2px solid rgba(255, 255, 255, 0.8)',
               flexShrink: 0
             }}
@@ -65,10 +65,10 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
               color: 'var(--text-main)',
               letterSpacing: '0.01em'
             }}>
-              TinTom Simulator
+              Parrot Party
             </h1>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-              King of mimicry!
+              Good vibes, terrible impressions.
             </span>
           </div>
         </div>

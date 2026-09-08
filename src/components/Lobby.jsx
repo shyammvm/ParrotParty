@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { peerManager } from '../utils/peerManager';
 import { roomDirectory } from '../utils/roomDirectory';
 import { PlayerAvatar } from '../utils/avatarUtils';
-import tintomLogo from '../assets/tintom.png';
+import parrotLogo from '../assets/parrot-party.png';
 import { IconLogOut, IconRefresh, IconLock, IconSettings } from './Icons';
 
 export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, onLeaveRoom }) {
-  const [playerName, setPlayerName] = useState(() => localStorage.getItem('tintom_player_name') || '');
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem('parrot_player_name') || localStorage.getItem('tintom_player_name') || '');
   const [inputRoomId, setInputRoomId] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -276,25 +276,28 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
     <div className="card">
       <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
         <img
-          src={tintomLogo}
-          alt="TinTom Simulator"
+          src={parrotLogo}
+          alt="Parrot Party"
           onError={(e) => {
-            e.currentTarget.src = `${import.meta.env.BASE_URL}images/tintom.png`;
+            e.currentTarget.src = `${import.meta.env.BASE_URL}images/parrot-party.png`;
           }}
           style={{
             width: 76,
             height: 76,
             borderRadius: 20,
             objectFit: 'cover',
-            objectPosition: 'top center',
-            boxShadow: '0 8px 24px rgba(244, 132, 95, 0.28)',
+            objectPosition: 'center',
+            boxShadow: '0 8px 24px rgba(56, 189, 248, 0.25)',
             border: '3px solid rgba(255, 255, 255, 0.9)',
             marginBottom: '0.6rem'
           }}
         />
-        <h2 className="card-title" style={{ justifyContent: 'center', textAlign: 'center', marginBottom: '0.25rem' }}>
-          Join TinTom Simulator
+        <h2 className="card-title" style={{ justifyContent: 'center', textAlign: 'center', marginBottom: '0.2rem' }}>
+          Join Parrot Party
         </h2>
+        <p style={{ fontSize: '0.82rem', color: 'var(--primary)', fontWeight: 700, margin: '0 0 0.35rem 0', letterSpacing: '0.01em' }}>
+          Good vibes, terrible impressions.
+        </p>
         <p className="card-subtitle" style={{ marginBottom: 0 }}>
           Create or join a room with a 4-digit code (up to 10 players)!
         </p>
@@ -364,7 +367,7 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
           <input
             type="text"
             className="input-field"
-            placeholder="TinTom, MicMaster, SoundNinja..."
+            placeholder="PartyParrot, MicMaster, SoundNinja..."
             value={playerName}
             maxLength={18}
             style={{ margin: 0, flex: 1 }}
