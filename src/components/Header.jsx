@@ -68,7 +68,7 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
               TinTom Simulator
             </h1>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-              Party Voice Imitation Game
+              King of mimicry!
             </span>
           </div>
         </div>
@@ -106,21 +106,20 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
                   connStatus === 'connected'
                     ? 'rgba(16, 185, 129, 0.12)'
                     : connStatus === 'reconnecting'
-                    ? 'rgba(245, 158, 11, 0.15)'
-                    : 'rgba(239, 68, 68, 0.15)',
+                      ? 'rgba(245, 158, 11, 0.15)'
+                      : 'rgba(239, 68, 68, 0.15)',
                 color:
                   connStatus === 'connected'
                     ? '#10b981'
                     : connStatus === 'reconnecting'
-                    ? '#f59e0b'
-                    : '#ef4444',
-                border: `1.5px solid ${
-                  connStatus === 'connected'
+                      ? '#f59e0b'
+                      : '#ef4444',
+                border: `1.5px solid ${connStatus === 'connected'
                     ? 'rgba(16, 185, 129, 0.35)'
                     : connStatus === 'reconnecting'
-                    ? 'rgba(245, 158, 11, 0.45)'
-                    : 'rgba(239, 68, 68, 0.45)'
-                }`
+                      ? 'rgba(245, 158, 11, 0.45)'
+                      : 'rgba(239, 68, 68, 0.45)'
+                  }`
               }}
               title={
                 connStatus === 'connected'
@@ -137,8 +136,8 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
                     connStatus === 'connected'
                       ? '#10b981'
                       : connStatus === 'reconnecting'
-                      ? '#f59e0b'
-                      : '#ef4444',
+                        ? '#f59e0b'
+                        : '#ef4444',
                   boxShadow:
                     connStatus === 'connected'
                       ? '0 0 6px #10b981'
@@ -151,8 +150,8 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
                 {connStatus === 'connected'
                   ? 'Synced'
                   : connStatus === 'reconnecting'
-                  ? 'Reconnecting...'
-                  : 'Disconnected'}
+                    ? 'Reconnecting...'
+                    : 'Disconnected'}
               </span>
 
               {connStatus !== 'connected' && !roomState.isHost && (
@@ -177,13 +176,15 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
 
           {roomState?.roomId && (
             <>
-              <button
-                className="btn btn-secondary"
-                onClick={copyRoomLink}
-                style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-              >
-                {copied ? <><IconCheck size={13} /> Copied!</> : <><IconShare size={13} /> Share Link</>}
-              </button>
+              {(!roomState.gamePhase || roomState.gamePhase === 'LOBBY') && (
+                <button
+                  className="btn btn-secondary"
+                  onClick={copyRoomLink}
+                  style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                >
+                  {copied ? <><IconCheck size={13} /> Copied!</> : <><IconShare size={13} /> Share Link</>}
+                </button>
+              )}
 
               {onLeaveRoom && (
                 <button

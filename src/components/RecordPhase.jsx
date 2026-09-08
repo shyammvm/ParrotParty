@@ -181,14 +181,25 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
 
   // ── MAIN COUNTDOWN → RECORD ──
   const startCountdownAndRecord = async () => {
+    // Auto-pause voice chat so mic solely feeds game recording
+    voiceChatManager.setAutoMuted('RECORDING', true);
+
+    let analyser;
+    try {
+      const result = await openMicStream();
+      analyser = result.analyser;
+    } catch (err) {
+      alert('Microphone error: ' + err.message);
+      voiceChatManager.setAutoMuted('RECORDING', false);
+      setPhase('IDLE');
+      return;
+    }
+
     setPhase('COUNTDOWN');
     setCountdown(3);
     setElapsed(0);
     setRecordedBars(null);
     accBarsRef.current = Array(NUM_BARS).fill(null);
-
-    // Auto-pause voice chat so mic solely feeds game recording
-    voiceChatManager.setAutoMuted('RECORDING', true);
 
     await new Promise(resolve => {
       let c = 3;
@@ -199,24 +210,19 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
           return;
         }
         c--;
-        if (c > 0) setCountdown(c);
-        else { clearInterval(tick); resolve(); }
+        if (c > 0) {
+          setCountdown(c);
+        } else {
+          clearInterval(tick);
+          resolve();
+        }
       }, 1000);
     });
 
     if (!isMountedRef.current) {
+      stopStream(micStreamRef, animFrameRef);
       voiceChatManager.setAutoMuted('RECORDING', false);
       return;
-    }
-
-    let analyser;
-    try {
-      const result = await openMicStream();
-      analyser = result.analyser;
-    } catch (err) {
-      alert('Microphone error: ' + err.message);
-      voiceChatManager.setAutoMuted('RECORDING', false);
-      setPhase('IDLE'); return;
     }
 
     chunksRef.current = [];
@@ -432,8 +438,36 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
       )}
 
       {phase === 'COUNTDOWN' && (
-        <div style={{ fontSize: '5rem', fontWeight: 900, color: 'var(--accent)', lineHeight: 1 }}>
-          {countdown}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          margin: '0.25rem 0'
+        }}>
+          <span style={{
+            fontSize: '0.85rem',
+            color: 'var(--text-muted)',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '2px',
+            marginBottom: '0.4rem'
+          }}>
+            Recording Starts In
+          </span>
+          <div
+            key={countdown}
+            style={{
+              fontSize: '5.5rem',
+              fontWeight: 900,
+              color: 'var(--accent)',
+              lineHeight: 1,
+              animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            }}
+          >
+            {countdown}
+          </div>
         </div>
       )}
 

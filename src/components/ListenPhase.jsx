@@ -12,7 +12,6 @@ const LISTEN_TIME_LIMIT = 30; // 30 seconds timer limit
 export default function ListenPhase({ roomState, onStartRecordingPhase }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [countdown, setCountdown] = useState(null);
   const [timeLeft, setTimeLeft] = useState(LISTEN_TIME_LIMIT);
 
   const animFrameRef = useRef(null);
@@ -43,7 +42,6 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
   useEffect(() => {
     setIsPlaying(false);
     setProgress(0);
-    setCountdown(null);
     localStartMsRef.current = Date.now();
     setTimeLeft(LISTEN_TIME_LIMIT);
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -129,26 +127,16 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
     }
   };
 
-  const triggerRecordingCountdown = () => {
+  const handleStartRecordingRound = () => {
     if (!allReady) return;
 
     stopCurrentAudio();
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     setProgress(0);
     setIsPlaying(false);
+    voiceChatManager.setAutoMuted('DEMO_PLAYBACK', false);
 
-    let count = 3;
-    setCountdown(count);
-    const interval = setInterval(() => {
-      count -= 1;
-      if (count > 0) {
-        setCountdown(count);
-      } else {
-        clearInterval(interval);
-        setCountdown('GO!');
-        setTimeout(() => onStartRecordingPhase(), 500);
-      }
-    }, 1000);
+    onStartRecordingPhase();
   };
 
   // Timer color states
@@ -385,19 +373,11 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
       </div>
 
       {/* ── Host & Client Action Row ── */}
-      {countdown !== null ? (
-        <div style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '5rem', fontWeight: 700,
-          color: 'var(--primary)', lineHeight: 1, margin: '0.5rem 0'
-        }}>
-          {countdown}
-        </div>
-      ) : isHost ? (
+      {isHost ? (
         <div>
           <button
             className={allReady ? 'btn btn-accent' : 'btn btn-secondary'}
-            onClick={triggerRecordingCountdown}
+            onClick={handleStartRecordingRound}
             disabled={!allReady}
             style={{
               width: '100%',

@@ -403,6 +403,21 @@ body {
   to   { transform: rotate(360deg); }
 }
 
+@keyframes popIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* ── Active Rooms & Lobby Discovery Styles ─────────────────────────────────── */
 .rejoin-banner {
   background: linear-gradient(135deg, rgba(244, 132, 95, 0.12), rgba(108, 99, 255, 0.1));
