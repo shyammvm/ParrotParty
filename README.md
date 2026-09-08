@@ -1,4 +1,4 @@
-# 🎙️ TinTom Simulator
+# 🎙️ ParrotParty
 
 > **A multiplayer party voice-imitation game built purely for fun, laughs, and chaotic audio showdowns!**
 
