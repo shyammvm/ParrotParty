@@ -32,13 +32,13 @@ export default function VoiceChatBar({ roomState, onOpenSettings }) {
   let autoPauseLabel = '';
   if (isAutoMuted) {
     if (autoMuteReasons.includes('RECORDING')) {
-      autoPauseLabel = '🎙️ Voice Paused (Recording In Progress)';
+      autoPauseLabel = 'Voice Paused (Recording In Progress)';
     } else if (autoMuteReasons.includes('DEMO_PLAYBACK')) {
-      autoPauseLabel = '🔇 Voice Paused (Demo Audio Playing)';
+      autoPauseLabel = 'Voice Paused (Demo Audio Playing)';
     } else if (autoMuteReasons.includes('REVEAL_PLAYBACK')) {
-      autoPauseLabel = '🔇 Voice Paused (Playing Recording)';
+      autoPauseLabel = 'Voice Paused (Playing Recording)';
     } else {
-      autoPauseLabel = '🔇 Voice Chat Paused';
+      autoPauseLabel = 'Voice Chat Paused';
     }
   }
 

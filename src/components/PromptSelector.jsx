@@ -246,9 +246,12 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
           borderRadius: '8px',
           color: '#fca5a5',
           fontSize: '0.85rem',
-          marginBottom: '1rem'
+          marginBottom: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem'
         }}>
-          ⚠️ {loadError}
+          <IconAlertTriangle size={15} /> {loadError}
         </div>
       )}
 
@@ -262,7 +265,9 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
           borderRadius: 'var(--radius)',
           marginBottom: '1.5rem'
         }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📁</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+            <IconMusic size={36} color="var(--text-muted)" />
+          </div>
           <h3 style={{ color: '#fff', marginBottom: '0.5rem' }}>No Sound Packs Found</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
             Drop a folder containing <code>.mp3</code> files inside <code>public/sounds/</code> and it will automatically appear here!
@@ -289,7 +294,9 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
           >
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '2rem' }}>🎲</span>
+                <div style={{ width: 40, height: 40, borderRadius: '10px', background: 'rgba(139, 92, 246, 0.2)', border: '1px solid rgba(139, 92, 246, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <IconShuffle size={20} color="#c4b5fd" />
+                </div>
                 <div>
                   <strong style={{ fontSize: '1.05rem', color: '#fff' }}>Mystery Mix (Random from Any Pack)</strong>
                   <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>

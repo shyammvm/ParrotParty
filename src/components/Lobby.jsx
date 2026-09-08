@@ -3,7 +3,7 @@ import { peerManager } from '../utils/peerManager';
 import { roomDirectory } from '../utils/roomDirectory';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import tintomLogo from '../assets/tintom.png';
-import { IconLogOut, IconRefresh, IconLock } from './Icons';
+import { IconLogOut, IconRefresh, IconLock, IconSettings } from './Icons';
 
 export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, onLeaveRoom }) {
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('tintom_player_name') || '');
@@ -211,9 +211,9 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
             <button
               className="btn btn-secondary"
               onClick={onOpenSettings}
-              style={{ width: '100%', padding: '0.65rem', fontSize: '0.88rem' }}
+              style={{ width: '100%', padding: '0.65rem', fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
             >
-              🎙️ Test Mic &amp; Audio Settings
+              <IconSettings size={14} /> Test Mic &amp; Audio Settings
             </button>
           </div>
         )}
@@ -376,14 +376,14 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
       </div>
 
       {onOpenSettings && (
-        <div style={{ marginBottom: '1.25rem', textAlign: 'center' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <button
             type="button"
             className="btn btn-secondary"
             onClick={onOpenSettings}
-            style={{ width: '100%', padding: '0.6rem', fontSize: '0.84rem' }}
+            style={{ width: '100%', padding: '0.6rem', fontSize: '0.84rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
           >
-            🎙️ Test Microphone &amp; Audio Before Playing
+            <IconSettings size={14} /> Test Microphone &amp; Audio Before Playing
           </button>
         </div>
       )}
@@ -503,7 +503,9 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
       {passcodeModalRoom && (
         <div className="passcode-modal-overlay" onClick={() => setPasscodeModalRoom(null)}>
           <div className="passcode-modal-card" onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.35rem' }}>🔒</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+              <IconLock size={32} color="var(--primary)" />
+            </div>
             <h3 style={{
               fontFamily: 'var(--font-display)', fontSize: '1.25rem',
               fontWeight: 700, marginBottom: '0.25rem', color: 'var(--text-main)'

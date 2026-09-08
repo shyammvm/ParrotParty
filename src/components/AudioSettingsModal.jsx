@@ -166,7 +166,7 @@ export default function AudioSettingsModal({ isOpen, onClose }) {
       <div className="modal-content card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500, margin: '1rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <span style={{ fontSize: '1.4rem' }}>🎙️</span>
+            <IconMic size={22} color="var(--primary)" />
             <div>
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontFamily: 'var(--font-display)', fontWeight: 700 }}>
                 Audio &amp; Microphone Settings

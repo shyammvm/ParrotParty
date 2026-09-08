@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { playAudioDataUrl, stopCurrentAudio } from '../utils/audioPlayer';
 import { getFunnyTitle } from '../utils/audioAnalyzer';
 import { PlayerAvatar } from '../utils/avatarUtils';
+import { IconTrophy, IconCrown, IconVolume, IconMic, IconSparkles, IconArrowRight } from './Icons';
 
 export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard }) {
   const [stage, setStage] = useState('IDLE'); // 'TARGET_PLAYING' | 'PLAYER_PLAYING' | 'SCORE_REVEALED' | 'PAUSED'
@@ -117,8 +118,8 @@ export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard
         marginBottom: '1.25rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--warning)' }}>
-            🏆 LIVE LEADERBOARD (UPDATED REAL-TIME)
+          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--warning)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <IconTrophy size={15} /> LIVE LEADERBOARD (UPDATED REAL-TIME)
           </span>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             REVEAL {currentRevealIndex + 1} OF {totalSteps}
@@ -141,7 +142,7 @@ export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard
                 whiteSpace: 'nowrap'
               }}
             >
-              <span>{rank === 0 ? '👑' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `#${rank + 1}`}</span>
+              <span>{rank === 0 ? <IconCrown size={13} color="var(--warning)" /> : `#${rank + 1}`}</span>
               <PlayerAvatar name={p.name} avatar={p.avatar} size={22} fontSize="0.65rem" />
               <strong>{p.name}</strong>
               <span style={{ color: 'var(--secondary)', fontWeight: 800 }}>{p.liveScore} pts</span>
@@ -170,20 +171,20 @@ export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard
         {/* Status Banner */}
         <div style={{ margin: '1rem 0', minHeight: '40px' }}>
           {stage === 'TARGET_PLAYING' && (
-            <div style={{ padding: '0.6rem 1rem', background: 'rgba(6, 182, 212, 0.15)', border: '1px solid var(--secondary)', borderRadius: '20px', color: 'var(--secondary)', fontWeight: 700, display: 'inline-block' }}>
-              🔊 Playing Original Demo Sound...
+            <div style={{ padding: '0.6rem 1rem', background: 'rgba(6, 182, 212, 0.15)', border: '1px solid var(--secondary)', borderRadius: '20px', color: 'var(--secondary)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <IconVolume size={16} /> Playing Target Demo Sound...
             </div>
           )}
 
           {stage === 'PLAYER_PLAYING' && (
-            <div style={{ padding: '0.6rem 1rem', background: 'rgba(139, 92, 246, 0.2)', border: '1px solid var(--primary)', borderRadius: '20px', color: 'var(--primary)', fontWeight: 700, display: 'inline-block' }}>
-              🎤 Playing {currentPlayer?.name}'s Recorded Voice!
+            <div style={{ padding: '0.6rem 1rem', background: 'rgba(139, 92, 246, 0.2)', border: '1px solid var(--primary)', borderRadius: '20px', color: 'var(--primary)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <IconMic size={16} /> Playing {currentPlayer?.name}'s Recorded Voice!
             </div>
           )}
 
           {stage === 'SCORE_REVEALED' && (
-            <div style={{ padding: '0.6rem 1rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid var(--success)', borderRadius: '20px', color: 'var(--success)', fontWeight: 700, display: 'inline-block' }}>
-              ✨ Score Revealed! Updating Leaderboard...
+            <div style={{ padding: '0.6rem 1rem', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid var(--success)', borderRadius: '20px', color: 'var(--success)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <IconSparkles size={16} /> Score Revealed! Updating Leaderboard...
             </div>
           )}
         </div>
@@ -197,7 +198,7 @@ export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard
             <div style={{ marginTop: '1.25rem', textAlign: 'left' }}>
               <div className="score-row">
                 <div className="score-label-bar">
-                  <span>🎵 Pitch Accuracy</span>
+                  <span>Pitch Accuracy</span>
                   <strong>{playerRecording?.scoreResult?.pitchScore || 80}%</strong>
                 </div>
                 <div className="score-bar-bg">
@@ -207,7 +208,7 @@ export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard
 
               <div className="score-row">
                 <div className="score-label-bar">
-                  <span>🥁 Rhythm & Timing</span>
+                  <span>Rhythm &amp; Timing</span>
                   <strong>{playerRecording?.scoreResult?.rhythmScore || 85}%</strong>
                 </div>
                 <div className="score-bar-bg">
@@ -222,12 +223,12 @@ export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard
         {isHost && (
           <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.5rem' }}>
             {!isLastStep ? (
-              <button className="btn btn-secondary" onClick={onNextReveal} style={{ flex: 1, fontSize: '0.85rem' }}>
-                Skip to Next Sound ➡️
+              <button className="btn btn-secondary" onClick={onNextReveal} style={{ flex: 1, fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                Skip to Next Sound <IconArrowRight size={16} />
               </button>
             ) : (
-              <button className="btn btn-success" onClick={onGoToLeaderboard} style={{ flex: 1, fontSize: '1rem' }}>
-                🏆 Declare Final Winner!
+              <button className="btn btn-success" onClick={onGoToLeaderboard} style={{ flex: 1, fontSize: '1rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                <IconTrophy size={18} /> Declare Final Winner!
               </button>
             )}
           </div>
