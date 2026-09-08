@@ -274,7 +274,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
               cursor: isHost && isMysteryEligible ? 'pointer' : (isHost ? 'not-allowed' : 'default')
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{
                   width: 40,
@@ -346,7 +346,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                   cursor: isHost && isEligible ? 'pointer' : (isHost ? 'not-allowed' : 'default')
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <span style={{ fontSize: '1.85rem' }}>{pack.icon}</span>
                     <div>
@@ -404,15 +404,6 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                       </span>
                     )}
                   </div>
-                </div>
-
-                {/* Sound chips preview */}
-                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.6rem' }}>
-                  {pack.sounds.map(s => (
-                    <span key={s.id} className="sound-chip">
-                      {s.title}
-                    </span>
-                  ))}
                 </div>
               </div>
             );
