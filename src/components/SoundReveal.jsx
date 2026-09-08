@@ -4,6 +4,7 @@ import { getFunnyTitle } from '../utils/audioAnalyzer';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import { peerManager } from '../utils/peerManager';
 import { voiceChatManager } from '../utils/voiceChatManager';
+import { IconPlay, IconVolume, IconReplay, IconArrowRight, IconTrophy, IconWaveform, IconClock, IconHeadphones } from './Icons';
 
 /**
  * SoundReveal – Per-sound synchronized reveal phase.
@@ -262,8 +263,8 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
       {/* ── Live Leaderboard Bar ── */}
       <div className="card" style={{ padding: '0.75rem 1.25rem', marginBottom: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700 }}>
-            🏆 LIVE STANDINGS (Sound {currentSoundIndex + 1}/{totalSounds})
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <IconTrophy size={14} /> LIVE STANDINGS (Sound {currentSoundIndex + 1}/{totalSounds})
           </span>
           <span style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 700 }}>
             Revealing: {revealPlayerIndex + 1} of {players.length} Players
@@ -333,16 +334,20 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
             {isPlayingAudio && playingAudioType === 'recording' && (
               <span style={{
                 position: 'absolute',
-                bottom: 0,
+                bottom: -2,
                 right: -4,
-                fontSize: '1.2rem',
                 background: 'var(--primary)',
+                color: '#fff',
                 borderRadius: '50%',
-                padding: '2px 4px',
+                width: 24,
+                height: 24,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                 animation: 'pulseGreen 1.2s infinite'
               }}>
-                🔊
+                <IconVolume size={14} />
               </span>
             )}
           </div>
@@ -376,16 +381,16 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.55rem',
             background: 'rgba(244, 132, 95, 0.12)',
-            padding: '0.4rem 1rem',
+            padding: '0.45rem 1.15rem',
             borderRadius: '20px',
             marginBottom: '1rem',
             color: 'var(--primary)',
             fontWeight: 700,
             fontSize: '0.85rem'
           }}>
-            <span style={{ animation: 'spin 1.5s linear infinite' }}>🎵</span>
+            <IconWaveform size={16} />
             <span>
               {playingAudioType === 'demo' ? 'Playing Target Reference Sound...' : `Listening to ${currentPlayer?.name}...`}
             </span>
@@ -396,7 +401,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: '0.6rem',
+          gap: '0.65rem',
           flexWrap: 'wrap',
           marginBottom: '1.25rem'
         }}>
@@ -404,17 +409,33 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
             className="btn btn-secondary"
             onClick={handleReplayRecording}
             disabled={isPlayingAudio || !playerRecording?.audioDataUrl}
-            style={{ padding: '0.5rem 1.1rem', fontSize: '0.88rem' }}
+            style={{ padding: '0.55rem 1.2rem', fontSize: '0.88rem' }}
           >
-            {isPlayingAudio && playingAudioType === 'recording' ? '🔊 Playing Voice...' : '🔁 Replay Recording'}
+            {isPlayingAudio && playingAudioType === 'recording' ? (
+              <>
+                <IconVolume size={16} /> Playing Voice...
+              </>
+            ) : (
+              <>
+                <IconReplay size={16} /> Replay Recording
+              </>
+            )}
           </button>
           <button
             className="btn btn-secondary"
             onClick={handlePlayTargetDemo}
             disabled={isPlayingAudio || !currentSound?.targetAudioUrl}
-            style={{ padding: '0.5rem 1.1rem', fontSize: '0.88rem' }}
+            style={{ padding: '0.55rem 1.2rem', fontSize: '0.88rem' }}
           >
-            {isPlayingAudio && playingAudioType === 'demo' ? '🎯 Playing Demo...' : '🎯 Play Target Demo'}
+            {isPlayingAudio && playingAudioType === 'demo' ? (
+              <>
+                <IconVolume size={16} /> Playing Demo...
+              </>
+            ) : (
+              <>
+                <IconPlay size={15} fill="currentColor" /> Play Target Demo
+              </>
+            )}
           </button>
         </div>
 
@@ -431,10 +452,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
           gap: '0.5rem',
           flexWrap: 'wrap'
         }}>
-          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginRight: '0.2rem' }}>
-            React:
-          </span>
-          {['😂', '👏', '💀', '🔥', '🏆', '😱'].map(emoji => (
+          {['😂', '👏', '💀', '🔥', '🏆', '😱', '💩'].map(emoji => (
             <button
               key={emoji}
               onClick={() => handleTriggerReaction(emoji)}
@@ -454,9 +472,6 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
               {emoji}
             </button>
           ))}
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '0.4rem' }}>
-            (Voice chat active — talk &amp; laugh together!)
-          </span>
         </div>
 
         {/* ── Score display ── */}
@@ -489,7 +504,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxWidth: 360, margin: '0 auto' }}>
               <div className="score-row">
                 <div className="score-label-bar">
-                  <span>🎵 Pitch Curve</span>
+                  <span>Pitch Accuracy</span>
                   <strong>{playerRecording?.scoreResult?.pitchScore ?? 80}%</strong>
                 </div>
                 <div className="score-bar-bg">
@@ -498,7 +513,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
               </div>
               <div className="score-row">
                 <div className="score-label-bar">
-                  <span>🥁 Rhythm &amp; Timing</span>
+                  <span>Rhythm &amp; Timing</span>
                   <strong>{playerRecording?.scoreResult?.rhythmScore ?? 80}%</strong>
                 </div>
                 <div className="score-bar-bg">
@@ -507,7 +522,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
               </div>
               <div className="score-row">
                 <div className="score-label-bar">
-                  <span>🗣️ Voice Timbre</span>
+                  <span>Voice Timbre</span>
                   <strong>{playerRecording?.scoreResult?.timbreScore ?? 80}%</strong>
                 </div>
                 <div className="score-bar-bg">
@@ -529,7 +544,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                     onClick={handleAdvanceNextPlayer}
                     style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem' }}
                   >
-                    ▶️ Next Player ({revealPlayerIndex + 2}/{players.length})
+                    Next Player ({revealPlayerIndex + 2}/{players.length}) <IconArrowRight size={18} />
                   </button>
                 ) : !isLastSound ? (
                   <button
@@ -537,7 +552,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                     onClick={onNextSound}
                     style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem' }}
                   >
-                    ➡️ Proceed to Next Sound ({currentSoundIndex + 2}/{totalSounds})
+                    Proceed to Next Sound ({currentSoundIndex + 2}/{totalSounds}) <IconArrowRight size={18} />
                   </button>
                 ) : (
                   <button
@@ -545,7 +560,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                     onClick={onFinishAllSounds}
                     style={{ width: '100%', padding: '0.95rem', fontSize: '1.1rem' }}
                   >
-                    🏆 Declare Final Winner &amp; Leaderboard!
+                    <IconTrophy size={20} /> View Final Leaderboard
                   </button>
                 )}
                 <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>
@@ -553,10 +568,11 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                 </span>
               </div>
             ) : (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem', fontWeight: 600 }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+                <IconClock size={15} />
                 {!isLastPlayer
-                  ? '⏳ Waiting for host to reveal next player...'
-                  : (!isLastSound ? '⏳ Round finished! Waiting for host to start next sound...' : '⏳ All sounds finished! Waiting for final results...')
+                  ? 'Waiting for host to reveal next player...'
+                  : (!isLastSound ? 'Round finished — waiting for host to start next sound...' : 'All sounds finished — waiting for final results...')
                 }
               </p>
             )}
@@ -564,8 +580,8 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
         )}
 
         {stage !== 'SCORE_REVEALED' && !isHost && (
-          <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
-            🎧 Listening to playback... (Voice chat will resume right after)
+          <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+            <IconHeadphones size={15} /> Listening to playback... (Voice chat will resume right after)
           </p>
         )}
       </div>

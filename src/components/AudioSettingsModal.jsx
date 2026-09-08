@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { audioDeviceManager } from '../utils/audioDeviceManager';
+import { IconHeadphones, IconMic, IconVolume } from './Icons';
 
 export default function AudioSettingsModal({ isOpen, onClose }) {
   const [devices, setDevices] = useState([]);
@@ -192,8 +193,8 @@ export default function AudioSettingsModal({ isOpen, onClose }) {
 
         {/* Headphone Tip */}
         <div style={{
-          background: 'rgba(244, 132, 95, 0.08)',
-          border: '1.5px solid rgba(244, 132, 95, 0.25)',
+          background: 'rgba(244, 132, 95, 0.1)',
+          border: '1px solid rgba(244, 132, 95, 0.3)',
           borderRadius: 'var(--radius-sm)',
           padding: '0.75rem 1rem',
           display: 'flex',
@@ -201,7 +202,7 @@ export default function AudioSettingsModal({ isOpen, onClose }) {
           gap: '0.6rem',
           marginBottom: '1.25rem'
         }}>
-          <span style={{ fontSize: '1.2rem' }}>🎧</span>
+          <IconHeadphones size={20} color="var(--primary)" />
           <span style={{ fontSize: '0.8rem', color: 'var(--text-main)', fontWeight: 600 }}>
             <strong>Pro Tip:</strong> Using headphones prevents room audio feedback and ensures crystal-clear voice chat &amp; sound scoring!
           </span>
@@ -274,9 +275,20 @@ export default function AudioSettingsModal({ isOpen, onClose }) {
             disabled={testState !== 'idle'}
             style={{ flex: 1, padding: '0.75rem 1rem', fontSize: '0.88rem' }}
           >
-            {testState === 'recording' ? '🔴 Recording (Speak now...)' :
-             testState === 'playing' ? '🔊 Playing back your voice...' :
-             '🎙️ Test Record & Playback (2.5s)'}
+            {testState === 'recording' ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f43f5e', display: 'inline-block', animation: 'pulseRed 1s infinite' }} />
+                Recording (Speak now...)
+              </span>
+            ) : testState === 'playing' ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+                <IconVolume size={16} /> Playing back your voice...
+              </span>
+            ) : (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+                <IconMic size={16} /> Test Record &amp; Playback (2.5s)
+              </span>
+            )}
           </button>
         </div>
 

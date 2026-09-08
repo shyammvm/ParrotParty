@@ -111,10 +111,10 @@ export default function App() {
   };
 
   const handleHostSelectSoundPack = (soundPackTitle, soundPackItems) => {
-    const resetPlayers = roomState.players.map(p => ({
+    const resetPlayers = (roomState?.players || []).map(p => ({
       ...p,
       recordings: [],
-      scoreData: { overallScore: 0, soundScores: [] }
+      scoreData: { overallScore: 0, totalScore: 0, averageScore: 0, soundScores: [] }
     }));
 
     peerManager.updateRoomState({
@@ -123,6 +123,8 @@ export default function App() {
       soundPack: soundPackItems,
       currentSoundIndex: 0,
       revealPlayerIndex: 0,
+      listenReadyMap: {},
+      listenPhaseStartTime: Date.now(),
       players: resetPlayers
     });
   };
@@ -145,13 +147,33 @@ export default function App() {
     peerManager.updateRoomState({
       gamePhase: 'LISTEN',
       currentSoundIndex: nextSoundIdx,
-      revealPlayerIndex: 0
+      revealPlayerIndex: 0,
+      listenReadyMap: {},
+      listenPhaseStartTime: Date.now()
     });
   };
 
-  // SoundReveal finished the last sound → final LEADERBOARD
+  // SoundReveal finished the last sound → final LEADERBOARD with finalized total scores
   const handleFinishAllSounds = () => {
-    peerManager.updateRoomState({ gamePhase: 'LEADERBOARD' });
+    const finalizedPlayers = (roomState?.players || []).map(p => {
+      const validScores = (p.recordings || []).filter(Boolean).map(r => r.scoreResult?.overallScore || 0);
+      const totalScore = validScores.reduce((a, b) => a + b, 0);
+      const averageScore = validScores.length > 0 ? Math.round(totalScore / validScores.length) : (p.scoreData?.averageScore || 0);
+      return {
+        ...p,
+        scoreData: {
+          totalScore: totalScore || p.scoreData?.totalScore || p.scoreData?.overallScore || 0,
+          overallScore: totalScore || p.scoreData?.overallScore || 0,
+          averageScore,
+          soundScores: validScores.length > 0 ? validScores : (p.scoreData?.soundScores || [])
+        }
+      };
+    });
+
+    peerManager.updateRoomState({
+      gamePhase: 'LEADERBOARD',
+      players: finalizedPlayers
+    });
   };
 
   const handlePlayAgainNextRound = () => {

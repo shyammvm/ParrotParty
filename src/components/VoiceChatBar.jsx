@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { voiceChatManager } from '../utils/voiceChatManager';
 import { PlayerAvatar } from '../utils/avatarUtils';
+import { IconMic, IconMicOff, IconVolumeMute, IconHeadphones, IconRefresh, IconSettings } from './Icons';
 
 export default function VoiceChatBar({ roomState, onOpenSettings }) {
   const [voiceState, setVoiceState] = useState(() => ({
@@ -157,9 +158,8 @@ export default function VoiceChatBar({ roomState, onOpenSettings }) {
               {isSpeaking && (
                 <span style={{
                   position: 'absolute',
-                  bottom: -3,
-                  right: -3,
-                  fontSize: '0.6rem',
+                  bottom: -2,
+                  right: -2,
                   background: '#10b981',
                   color: '#fff',
                   borderRadius: '50%',
@@ -171,7 +171,7 @@ export default function VoiceChatBar({ roomState, onOpenSettings }) {
                   boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
                   animation: 'pulseGreen 1.2s infinite'
                 }}>
-                  🎙️
+                  <IconMic size={9} />
                 </span>
               )}
             </div>
@@ -199,7 +199,7 @@ export default function VoiceChatBar({ roomState, onOpenSettings }) {
           }}
           title={effectiveMuted ? 'Unmute microphone' : 'Mute microphone'}
         >
-          <span>{effectiveMuted ? '🔇' : '🎙️'}</span>
+          {effectiveMuted ? <IconMicOff size={14} /> : <IconMic size={14} />}
           <span>{effectiveMuted ? 'Unmute' : 'Mute'}</span>
         </button>
 
@@ -221,7 +221,7 @@ export default function VoiceChatBar({ roomState, onOpenSettings }) {
           }}
           title={effectiveDeafened ? 'Undeafen voice chat' : 'Deafen voice chat (mute all audio)'}
         >
-          <span>{effectiveDeafened ? '🔕' : '🎧'}</span>
+          {effectiveDeafened ? <IconVolumeMute size={14} /> : <IconHeadphones size={14} />}
           <span>{effectiveDeafened ? 'Undeafen' : 'Deafen'}</span>
         </button>
 
@@ -240,11 +240,11 @@ export default function VoiceChatBar({ roomState, onOpenSettings }) {
               borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.25rem'
+              gap: '0.3rem'
             }}
             title="Retry voice chat connection"
           >
-            🔄 Reconnect
+            <IconRefresh size={13} /> Reconnect
           </button>
         )}
 
@@ -253,13 +253,16 @@ export default function VoiceChatBar({ roomState, onOpenSettings }) {
           className="btn btn-secondary"
           onClick={onOpenSettings}
           style={{
-            padding: '0.35rem 0.65rem',
+            padding: '0.35rem 0.75rem',
             fontSize: '0.8rem',
-            borderRadius: '20px'
+            borderRadius: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem'
           }}
           title="Microphone & Audio Settings"
         >
-          ⚙️ Mic
+          <IconSettings size={13} /> Audio
         </button>
       </div>
     </div>

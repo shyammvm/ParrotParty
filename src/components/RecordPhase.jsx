@@ -6,6 +6,7 @@ import { audioDeviceManager } from '../utils/audioDeviceManager';
 import { voiceChatManager } from '../utils/voiceChatManager';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import WaveformDisplay from './WaveformDisplay';
+import { IconMic, IconVolume, IconSettings, IconCheck, IconClock, IconSparkles, IconWaveform } from './Icons';
 
 const NUM_BARS = 120;
 
@@ -270,8 +271,12 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
           scoreResult: score
         };
         const validScores = newRecs.filter(Boolean).map(r => r.scoreResult?.overallScore || 0);
+        const totalScore = validScores.reduce((a, b) => a + b, 0);
+        const averageScore = validScores.length > 0 ? Math.round(totalScore / validScores.length) : 0;
         peerManager.submitPlayerAudioPack(newRecs, {
-          overallScore: Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length),
+          totalScore,
+          averageScore,
+          overallScore: totalScore,
           soundScores: validScores
         });
         setPhase('DONE');
@@ -323,7 +328,9 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
         SOUND {currentSoundIndex + 1} OF {totalSounds}: {currentSound?.title}
       </div>
 
-      <div className="card-title" style={{ justifyContent: 'center' }}>🎙️ Record Your Mimic!</div>
+      <div className="card-title" style={{ justifyContent: 'center', gap: '0.5rem' }}>
+        <IconMic size={22} /> Record Your Mimic!
+      </div>
       <p className="card-subtitle">Try to match the purple waveform peaks with your voice!</p>
 
       {/* ── Combined waveform comparison ── */}
@@ -374,26 +381,26 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
         marginBottom: '1rem', textAlign: 'left'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            🎤 <strong style={{ color: '#fff' }}>{selectedDevice?.label || 'Default Mic'}</strong>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <IconMic size={14} /> <strong style={{ color: '#fff' }}>{selectedDevice?.label || 'Default Mic'}</strong>
           </span>
           <div style={{ display: 'flex', gap: '0.4rem' }}>
             <button className="btn btn-secondary"
               onClick={handleMicTest}
               disabled={testState === 'recording' || testState === 'playing' || phase !== 'IDLE'}
               style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem' }}>
-              {testState === 'recording' ? '🔴 2s...' : testState === 'playing' ? '🔊...' : '🧪 Test'}
+              {testState === 'recording' ? 'Listening...' : testState === 'playing' ? 'Playing...' : <><IconVolume size={13} /> Test</>}
             </button>
             <button className="btn btn-secondary"
               onClick={() => (onOpenSettings ? onOpenSettings() : setShowDevices(v => !v))}
               style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem' }}>
-              ⚙️ Mic Settings
+              <IconSettings size={13} /> Mic Settings
             </button>
           </div>
         </div>
         {testState === 'done' && (
-          <p style={{ fontSize: '0.72rem', color: 'var(--success)', marginTop: '0.3rem' }}>
-            ✅ Did you hear yourself? If not, tap ⚙️ to change mic.
+          <p style={{ fontSize: '0.72rem', color: 'var(--success)', marginTop: '0.3rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+            <IconCheck size={13} /> Did you hear yourself? If not, tap Mic Settings to change input.
           </p>
         )}
         {showDevices && devices.length > 0 && (
@@ -407,8 +414,9 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
                   setShowDevices(false);
                   setTestState('idle');
                 }}
-                style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem', textAlign: 'left' }}>
-                {d.deviceId === selectedDeviceId ? '✅ ' : ''}{d.label || `Mic ${d.deviceId.slice(0, 8)}`}
+                style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                {d.deviceId === selectedDeviceId && <IconCheck size={13} />}
+                {d.label || `Mic ${d.deviceId.slice(0, 8)}`}
               </button>
             ))}
           </div>
@@ -419,7 +427,7 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
       {phase === 'IDLE' && !hasRecorded && (
         <button className="btn btn-accent" onClick={startCountdownAndRecord}
           style={{ width: '100%', padding: '1rem', fontSize: '1.15rem' }}>
-          🎙️ Start Recording
+          <IconMic size={20} /> Start Recording
         </button>
       )}
 
@@ -434,21 +442,24 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
           <div style={{ fontSize: '3rem', fontWeight: 900, color: '#f43f5e', lineHeight: 1 }}>
             {Math.max(0, targetDuration - elapsed).toFixed(1)}s
           </div>
-          <p style={{ color: '#f43f5e', fontWeight: 700, marginTop: '0.25rem' }}>
-            🔴 RECORDING — match the purple peaks!
+          <p style={{ color: '#f43f5e', fontWeight: 700, marginTop: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
+            <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#f43f5e', boxShadow: '0 0 8px #f43f5e', display: 'inline-block' }} />
+            RECORDING — match the purple peaks!
           </p>
         </div>
       )}
 
       {phase === 'PROCESSING' && (
-        <div style={{ color: 'var(--secondary)', fontWeight: 700, padding: '1rem' }}>
-          ⚡ Scoring your recording...
+        <div style={{ color: 'var(--secondary)', fontWeight: 700, padding: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+          <IconWaveform size={18} /> Scoring your recording...
         </div>
       )}
 
       {(phase === 'DONE' || hasRecorded) && (
         <div style={{ padding: '1rem', background: 'rgba(16,185,129,0.1)', border: '1px solid var(--success)', borderRadius: 'var(--radius-sm)' }}>
-          <strong style={{ color: 'var(--success)' }}>✅ Submitted!</strong>
+          <strong style={{ color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
+            <IconCheck size={16} /> Submitted!
+          </strong>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
             {players.filter(p => p.recordings?.[currentSoundIndex]).length} / {players.length} ready
           </p>
@@ -464,8 +475,8 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
                 <span>{p.name}</span>
               </div>
               {p.recordings?.[currentSoundIndex]
-                ? <span className="badge-ready">✅ Ready</span>
-                : <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>⏳ Recording...</span>}
+                ? <span className="badge-ready" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><IconCheck size={13} /> Ready</span>
+                : <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><IconClock size={13} /> Recording...</span>}
             </div>
           ))}
         </div>
@@ -474,7 +485,7 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
       {isHost && allReady && (
         <button className="btn btn-primary" onClick={onSoundComplete}
           style={{ width: '100%', marginTop: '1rem', padding: '0.8rem' }}>
-          ✨ Reveal Recordings for Sound {currentSoundIndex + 1}!
+          <IconSparkles size={18} /> Reveal Recordings for Sound {currentSoundIndex + 1}!
         </button>
       )}
     </div>

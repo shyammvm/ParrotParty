@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import { peerManager } from '../utils/peerManager';
 import tintomLogo from '../assets/tintom.png';
+import { IconShare, IconCheck, IconLogOut, IconSettings } from './Icons';
 
 export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveRoom }) {
   const [copied, setCopied] = useState(false);
@@ -179,9 +180,9 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
               <button
                 className="btn btn-secondary"
                 onClick={copyRoomLink}
-                style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem' }}
+                style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
               >
-                {copied ? 'Copied!' : 'Share Link'}
+                {copied ? <><IconCheck size={13} /> Copied!</> : <><IconShare size={13} /> Share Link</>}
               </button>
 
               {onLeaveRoom && (
@@ -195,11 +196,14 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
                     background: 'rgba(239, 68, 68, 0.12)',
                     color: '#ef4444',
                     border: '1.5px solid rgba(239, 68, 68, 0.35)',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
                   }}
                   title="Leave this game room"
                 >
-                  🚪 Leave
+                  <IconLogOut size={13} /> Leave
                 </button>
               )}
             </>
@@ -210,10 +214,10 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
             <button
               className="btn btn-secondary"
               onClick={onOpenSettings}
-              style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem' }}
+              style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
               title="Universal Microphone & Audio Settings"
             >
-              🎙️ Mic Setup
+              <IconSettings size={13} /> Mic Setup
             </button>
           )}
 

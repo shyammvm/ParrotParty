@@ -481,6 +481,7 @@ export class RoomPeerManager {
         revealPlayerIndex: 0,
         currentRevealIndex: 0,
         revealedScoresMap: {},
+        listenReadyMap: {},
         stateVersion: 1
       };
 
@@ -834,6 +835,12 @@ export class RoomPeerManager {
           player.scoreData = msg.scoreData;
           this.broadcastState();
         }
+      } else if (msg.type === 'PLAYER_LISTEN_READY') {
+        if (!this.roomState.listenReadyMap) {
+          this.roomState.listenReadyMap = {};
+        }
+        this.roomState.listenReadyMap[msg.playerId] = Boolean(msg.isReady);
+        this.broadcastState();
       }
     } else {
       // ── Client Handlers ──
@@ -938,6 +945,31 @@ export class RoomPeerManager {
         playerId: this.playerId,
         recordings,
         scoreData
+      };
+      if (this.hostConnection && this.hostConnection.open) {
+        this.sendOverConn(this.hostConnection, msg);
+      }
+      if (this.broadcastChannel) {
+        this.broadcastChannel.postMessage(msg);
+      }
+    }
+  }
+
+  setListenReady(isReady = true) {
+    if (!this.roomState) return;
+    if (!this.roomState.listenReadyMap) {
+      this.roomState.listenReadyMap = {};
+    }
+    this.roomState.listenReadyMap[this.playerId] = Boolean(isReady);
+
+    if (this.isHost) {
+      this.broadcastState();
+    } else {
+      this.emitState();
+      const msg = {
+        type: 'PLAYER_LISTEN_READY',
+        playerId: this.playerId,
+        isReady: Boolean(isReady)
       };
       if (this.hostConnection && this.hostConnection.open) {
         this.sendOverConn(this.hostConnection, msg);

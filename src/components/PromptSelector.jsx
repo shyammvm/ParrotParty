@@ -3,6 +3,7 @@ import { SOUND_PACKS, MYSTERY_PACK_ID, shuffleArray, getAllSounds, loadSoundUrl 
 import { blobToDataURL, peerManager } from '../utils/peerManager';
 import { extractWaveformBars } from './WaveformDisplay';
 import { PlayerAvatar } from '../utils/avatarUtils';
+import { IconCrown, IconMusic, IconShuffle, IconAlertTriangle, IconClock, IconArrowRight } from './Icons';
 
 export default function PromptSelector({ roomState, onSelectSoundPack }) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -20,7 +21,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
   // Virtual pack for "Random from Any Pack"
   const mysteryPack = {
     id: MYSTERY_PACK_ID,
-    title: '🎲 Mystery Mix (Any Pack)',
+    title: 'Mystery Mix (Any Pack)',
     icon: '🎲',
     description: `Picks ${roundSoundsCount} completely random sounds across all available sound packs!`,
     count: allSounds.length,
@@ -144,7 +145,9 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
     <div className="card">
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div className="card-title" style={{ marginBottom: 0 }}>📦 Select Sound Pack</div>
+        <div className="card-title" style={{ marginBottom: 0, gap: '0.5rem' }}>
+          <IconMusic size={20} /> Select Sound Pack
+        </div>
         {isHost ? (
           <span style={{
             fontSize: '0.8rem',
@@ -153,9 +156,12 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
             background: 'rgba(244,132,95,0.12)',
             padding: '0.25rem 0.75rem',
             borderRadius: '20px',
-            border: '1px solid rgba(244,132,95,0.3)'
+            border: '1px solid rgba(244,132,95,0.3)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.35rem'
           }}>
-            👑 You are choosing the round settings
+            <IconCrown size={13} /> Choosing round settings
           </span>
         ) : (
           <span style={{
@@ -167,7 +173,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
             borderRadius: '20px',
             border: '1px solid rgba(6,182,212,0.3)'
           }}>
-            👀 Watching {hostPlayer?.name || 'Host'}'s selection
+            Watching {hostPlayer?.name || 'Host'}'s selection
           </span>
         )}
       </div>
@@ -194,7 +200,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
       }}>
         <div>
           <strong style={{ fontSize: '0.95rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            🎯 Match Length
+            Match Length
           </strong>
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
             {isHost
@@ -301,23 +307,26 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                       background: 'var(--primary)',
                       color: '#fff',
                       padding: '0.2rem 0.6rem',
-                      borderRadius: '12px'
+                      borderRadius: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
                     }}>
-                      {isHost ? '✓ Selected' : `👑 Chosen by ${hostPlayer?.name || 'Host'}`}
+                      {isHost ? '✓ Selected' : <><IconCrown size={12} /> Chosen by {hostPlayer?.name || 'Host'}</>}
                     </span>
                   )}
                   {isMysteryEligible ? (
                     <span className="badge-ready" style={{ fontSize: '0.78rem', background: 'rgba(139, 92, 246, 0.25)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.4)' }}>
-                      ✨ All {allSounds.length} Sounds
+                      All {allSounds.length} Sounds
                     </span>
                   ) : (
-                    <span style={{ fontSize: '0.72rem', color: '#fca5a5', fontWeight: 700 }}>
-                      ⚠️ Needs {roundSoundsCount} sounds ({allSounds.length} available)
+                    <span style={{ fontSize: '0.72rem', color: '#fca5a5', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <IconAlertTriangle size={12} /> Needs {roundSoundsCount} sounds ({allSounds.length} available)
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 700 }}>
-                  🎲 100% Surprise Shuffle
+                <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <IconShuffle size={12} /> 100% Surprise Shuffle
                 </span>
               </div>
             </div>
@@ -366,14 +375,17 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                           background: 'var(--primary)',
                           color: '#fff',
                           padding: '0.2rem 0.6rem',
-                          borderRadius: '12px'
+                          borderRadius: '12px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
                         }}>
-                          {isHost ? '✓ Selected' : `👑 Chosen by ${hostPlayer?.name || 'Host'}`}
+                          {isHost ? '✓ Selected' : <><IconCrown size={12} /> Chosen by {hostPlayer?.name || 'Host'}</>}
                         </span>
                       )}
                       {isEligible ? (
-                        <span className="badge-ready" style={{ fontSize: '0.8rem' }}>
-                          🎵 {pack.count} Sounds
+                        <span className="badge-ready" style={{ fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <IconMusic size={12} /> {pack.count} Sounds
                         </span>
                       ) : (
                         <span style={{
@@ -383,15 +395,18 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                           border: '1px solid rgba(239, 68, 68, 0.35)',
                           padding: '0.15rem 0.5rem',
                           borderRadius: '6px',
-                          fontWeight: 700
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
                         }}>
-                          ⚠️ Needs {roundSoundsCount} sounds ({pack.count} has)
+                          <IconAlertTriangle size={12} /> Needs {roundSoundsCount} sounds ({pack.count} has)
                         </span>
                       )}
                     </div>
                     {isEligible && (
-                      <span style={{ fontSize: '0.7rem', color: 'var(--success)', fontWeight: 700 }}>
-                        🎲 Random Selection
+                      <span style={{ fontSize: '0.7rem', color: 'var(--success)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <IconShuffle size={12} /> Random Selection
                       </span>
                     )}
                   </div>
@@ -408,7 +423,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                       borderRadius: '4px',
                       color: 'var(--text-primary)'
                     }}>
-                      🎵 {s.title}
+                      {s.title}
                     </span>
                   ))}
                 </div>
@@ -424,7 +439,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
           {isGenerating && progress.total > 0 && (
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
-                <span>⚡ Selecting and loading {progress.total} random sounds...</span>
+                <span>Selecting and loading {progress.total} random sounds...</span>
                 <span>{progress.current} / {progress.total}</span>
               </div>
               <div className="score-bar-bg">
@@ -444,10 +459,12 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
             style={{ width: '100%', padding: '1rem', fontSize: '1.08rem' }}
           >
             {isGenerating
-              ? `⚡ Preparing Round (${progress.current}/${progress.total})...`
-              : (selectedPack
-                  ? `🚀 Start Round: ${roundSoundsCount} Random Sounds (${selectedPack.title})`
-                  : 'Select an Eligible Pack to Start'
+              ? `Preparing Round (${progress.current}/${progress.total})...`
+              : (selectedPack ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
+                    Start Round ({roundSoundsCount} Sounds) <IconArrowRight size={18} />
+                  </span>
+                ) : 'Select an Eligible Pack to Start'
                 )}
           </button>
         </>
@@ -470,8 +487,8 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
               <strong style={{ color: 'var(--primary)', fontSize: '0.95rem' }}>{selectedPack?.title || 'a pack'}</strong>
             </div>
           </div>
-          <p style={{ margin: '0.45rem 0 0', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            ⏳ Waiting for {hostPlayer?.name || 'Host'} to start the round...
+          <p style={{ margin: '0.45rem 0 0', fontSize: '0.82rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
+            <IconClock size={14} /> Waiting for {hostPlayer?.name || 'Host'} to start the round...
           </p>
         </div>
       )}

@@ -3,6 +3,7 @@ import { peerManager } from '../utils/peerManager';
 import { roomDirectory } from '../utils/roomDirectory';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import tintomLogo from '../assets/tintom.png';
+import { IconLogOut, IconRefresh, IconLock } from './Icons';
 
 export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, onLeaveRoom }) {
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('tintom_player_name') || '');
@@ -223,11 +224,13 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
               style={{ width: '100%', padding: '0.9rem', fontSize: '1rem' }}>
               Pick a Sound Pack &amp; Start!
             </button>
-            <button className="btn btn-secondary" onClick={openSecondTabTest}
-              disabled={isFull}
-              style={{ width: '100%', fontSize: '0.85rem', opacity: isFull ? 0.6 : 1 }}>
-              {isFull ? 'Room Full (10/10 Players Max)' : 'Open a 2nd Tab to Test Locally'}
-            </button>
+            {import.meta.env.DEV && (
+              <button className="btn btn-secondary" onClick={openSecondTabTest}
+                disabled={isFull}
+                style={{ width: '100%', fontSize: '0.85rem', opacity: isFull ? 0.6 : 1 }}>
+                {isFull ? 'Room Full (10/10 Players Max)' : 'Open a 2nd Tab to Test Locally'}
+              </button>
+            )}
           </div>
         ) : (
           <div style={{
@@ -253,10 +256,14 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
                 padding: '0.6rem',
                 fontSize: '0.84rem',
                 color: 'var(--danger)',
-                borderColor: 'rgba(240, 82, 82, 0.35)'
+                borderColor: 'rgba(240, 82, 82, 0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem'
               }}
             >
-              🚪 Leave Room
+              <IconLogOut size={14} /> Leave Room
             </button>
           </div>
         )}
@@ -313,9 +320,9 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
               className="btn btn-primary"
               onClick={() => handleRejoin(savedRoom)}
               disabled={loading}
-              style={{ padding: '0.45rem 0.95rem', fontSize: '0.82rem' }}
+              style={{ padding: '0.45rem 0.95rem', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              ⚡ Rejoin Room
+              <IconRefresh size={13} /> Rejoin Room
             </button>
             <button
               type="button"
@@ -471,9 +478,9 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                     <span style={{
                       fontSize: '0.72rem', color: 'var(--text-muted)',
-                      fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem'
+                      fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem'
                     }} title="4-digit room code is required to enter this room">
-                      🔒 Code Required
+                      <IconLock size={12} /> Code Required
                     </span>
                     <button
                       type="button"
