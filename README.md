@@ -2,11 +2,11 @@
 
 > **A multiplayer party voice-imitation game built purely for fun, laughs, and chaotic audio showdowns!**
 
-[![Live Demo](https://img.shields.io/badge/Live%20App-Play%20Now-coral?style=for-the-badge&logo=googlechrome&logoColor=white)](https://shyammvm.github.io/TinTomSimulator/)
-[![Vibe Coded](https://img.shields.io/badge/Built%20With-Pure%20Vibes%20✨-blueviolet?style=for-the-badge)](https://shyammvm.github.io/TinTomSimulator/)
+[![Live Demo](https://img.shields.io/badge/Live%20App-Play%20Now-coral?style=for-the-badge&logo=googlechrome&logoColor=white)](https://shyammvm.github.io/ParrotParty/)
+[![Vibe Coded](https://img.shields.io/badge/Built%20With-Pure%20Vibes%20✨-blueviolet?style=for-the-badge)](https://shyammvm.github.io/ParrotParty/)
 [![Tech Stack](https://img.shields.io/badge/Stack-React%20%7C%20Vite%20%7C%20WebRTC%20%7C%20WebAudio-orange?style=for-the-badge)](https://vitejs.dev/)
 
-🎮 **Play Online:** [https://shyammvm.github.io/TinTomSimulator/](https://shyammvm.github.io/TinTomSimulator/)
+🎮 **Play Online:** [https://shyammvm.github.io/ParrotParty/](https://shyammvm.github.io/ParrotParty/)
 
 ---
 
@@ -109,8 +109,8 @@ To run TinTom Simulator locally on your machine:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/shyammvm/TinTomSimulator.git
-cd TinTomSimulator
+git clone https://github.com/shyammvm/ParrotParty.git
+cd ParrotParty
 
 # 2. Install dependencies
 npm install
