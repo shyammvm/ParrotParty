@@ -10,9 +10,9 @@
 
 ---
 
-## ⚡ What is TinTom Simulator?
+## ⚡ What is Parrot Party?
 
-**TinTom Simulator** is a multiplayer voice imitation party game. Players gather in a room, listen to hilarious sound clips (iconic Malayalam movie dialogues, Japanese anime voice lines, meme sound effects, and more), and record their best voice impersonations.
+**Parrot Party** is a multiplayer voice imitation party game. Players gather in a room, listen to hilarious sound clips (iconic Malayalam movie dialogues, Japanese anime voice lines, meme sound effects, and more), and record their best voice impersonations.
 
 The app uses an **in-browser audio analysis engine** to compare pitch, rhythm, energy, and timing against the original sound clip, ranking everyone on a chaotic live leaderboard with witty commentary and badges.
 
@@ -105,7 +105,7 @@ flowchart TD
 
 ## 🛠️ Local Development
 
-To run TinTom Simulator locally on your machine:
+To run Parrot Party locally on your machine:
 
 ```bash
 # 1. Clone the repository
