@@ -48,9 +48,17 @@ export default function WaveformDisplay({
         const barH = amplitude * (H - 8);
 
         const isBehindCursor = progress != null && x / W <= progress;
-        ctx.fillStyle = isBehindCursor ? color : hexWithAlpha(color, 0.3);
+        if (isBehindCursor) {
+          const grad = ctx.createLinearGradient(0, mid - barH / 2, 0, mid + barH / 2);
+          grad.addColorStop(0, '#c084fc');
+          grad.addColorStop(0.5, color);
+          grad.addColorStop(1, '#6b21a8');
+          ctx.fillStyle = grad;
+        } else {
+          ctx.fillStyle = hexWithAlpha(color, 0.28);
+        }
 
-        roundRect(ctx, x, mid - barH / 2, barW, barH, 2);
+        roundRect(ctx, x, mid - barH / 2, barW, barH, 2.5);
         ctx.fill();
       }
     }
@@ -65,8 +73,13 @@ export default function WaveformDisplay({
         const amplitude = Math.max(0.02, val);
         const barH = amplitude * (H - 8);
 
-        ctx.fillStyle = hexWithAlpha(recordColor, 0.85);
-        roundRect(ctx, x, mid - barH / 2, barW, barH, 2);
+        const recGrad = ctx.createLinearGradient(0, mid - barH / 2, 0, mid + barH / 2);
+        recGrad.addColorStop(0, '#fda4af');
+        recGrad.addColorStop(0.5, recordColor);
+        recGrad.addColorStop(1, '#9f1239');
+        ctx.fillStyle = recGrad;
+
+        roundRect(ctx, x, mid - barH / 2, barW, barH, 2.5);
         ctx.fill();
       }
     }
@@ -75,9 +88,9 @@ export default function WaveformDisplay({
     if (liveData && liveData.length > 0) {
       ctx.beginPath();
       ctx.strokeStyle = liveColor;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.shadowColor = liveColor;
-      ctx.shadowBlur = 5;
+      ctx.shadowBlur = 6;
 
       const sliceW = W / liveData.length;
       for (let i = 0; i < liveData.length; i++) {
@@ -90,7 +103,7 @@ export default function WaveformDisplay({
       ctx.shadowBlur = 0;
     }
 
-    // ── Draw playback cursor line ──
+    // ── Draw playback cursor line with glowing head dot ──
     if (progress != null && progress > 0 && progress < 1) {
       const cx = progress * W;
       ctx.beginPath();
@@ -101,6 +114,15 @@ export default function WaveformDisplay({
       ctx.lineTo(cx, H);
       ctx.stroke();
       ctx.setLineDash([]);
+
+      // Head dot
+      ctx.beginPath();
+      ctx.arc(cx, mid, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
     }
   }, [bars, recordedBars, liveData, progress, color, recordColor, liveColor, height]);
 

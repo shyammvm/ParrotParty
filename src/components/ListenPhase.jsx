@@ -6,7 +6,8 @@ import { peerManager } from '../utils/peerManager';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import WaveformDisplay from './WaveformDisplay';
 import PhaseIntroOverlay from './PhaseIntroOverlay';
-import { IconPlay, IconVolume, IconLock, IconCheck, IconHeadphones, IconMic, IconClock, IconReplay } from './Icons';
+import ParrotMascot from './ParrotMascot';
+import { IconPlay, IconVolume, IconLock, IconCheck, IconHeadphones, IconMic, IconClock, IconReplay, IconMusic, IconWaveform, IconUsers } from './Icons';
 
 const LISTEN_TIME_LIMIT = 30; // 30 seconds timer limit
 
@@ -240,302 +241,283 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
       : 'rgba(244, 132, 95, 0.12)';
 
   return (
-    <div className="card" style={{ textAlign: 'center' }}>
-      {/* Progress pill */}
-      <div style={{
-        display: 'inline-block', padding: '0.25rem 0.9rem',
-        background: 'rgba(244,132,95,0.1)', border: '1.5px solid rgba(244,132,95,0.35)',
-        borderRadius: '20px', fontSize: '0.78rem', color: 'var(--primary)',
-        fontWeight: 700, marginBottom: '1rem', fontFamily: 'var(--font-display)',
-        letterSpacing: '0.03em'
-      }}>
-        SOUND {currentSoundIndex + 1} OF {totalSounds}
-      </div>
+    <div className="card arcade-stage-card" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.42rem', padding: '0.75rem 1.1rem' }}>
+      {/* ── Top Header Row: Mascot + Sound Title + Timer ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <ParrotMascot mode="LISTEN" size={44} />
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <span style={{
+                padding: '0.15rem 0.6rem',
+                background: 'rgba(244,132,95,0.14)',
+                border: '1.5px solid rgba(244,132,95,0.45)',
+                borderRadius: '20px',
+                fontSize: '0.7rem',
+                color: 'var(--primary)',
+                fontWeight: 800,
+                fontFamily: 'var(--font-display)',
+                letterSpacing: '0.04em'
+              }}>
+                SOUND {currentSoundIndex + 1}/{totalSounds}
+              </span>
+              <h2 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.3rem',
+                fontWeight: 800,
+                color: 'var(--text-main)',
+                margin: 0,
+                lineHeight: 1.15
+              }}>
+                {currentSound?.title || ''}
+              </h2>
+            </div>
+            <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              {isPlaying ? (
+                <>
+                  <IconMusic size={13} color="#8b5cf6" />
+                  <span>Groove to the demo sound!</span>
+                </>
+              ) : isPlaybackDeactivated ? (
+                <>
+                  <IconLock size={13} color="var(--warning)" />
+                  <span>Playback locked — ready for mimics!</span>
+                </>
+              ) : (
+                <>
+                  <IconHeadphones size={13} color="var(--primary)" />
+                  <span>Listen carefully — practice your mimic!</span>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
 
-      <h2 style={{
-        fontFamily: 'var(--font-display)', fontSize: '1.8rem',
-        fontWeight: 700, marginBottom: '0.3rem', color: 'var(--text-main)'
-      }}>
-        {currentSound?.title || ''}
-      </h2>
-      <p className="card-subtitle" style={{ marginBottom: '1.25rem' }}>
-        Listen carefully — practice your mimic before the timer runs out!
-      </p>
-
-      {/* ── 30-Second Listening Timer Bar ── */}
-      <div style={{
-        background: 'var(--bg-card-2)',
-        border: `1.5px solid ${isUrgent ? 'rgba(255,107,107,0.4)' : 'var(--border-color)'}`,
-        borderRadius: 'var(--radius-sm)',
-        padding: '0.85rem 1.1rem',
-        marginBottom: '1.25rem'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-            ⏱️ Listening Time Remaining
-          </span>
+        {/* 30-Second Listening Timer Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           <span style={{
             fontFamily: 'var(--font-display)',
-            fontSize: '1rem',
+            fontSize: '0.92rem',
             fontWeight: 800,
             color: timerBadgeColor,
             background: timerBadgeBg,
-            padding: '0.15rem 0.65rem',
+            padding: '0.18rem 0.65rem',
             borderRadius: '12px',
             border: `1.5px solid ${timerBadgeColor}`,
-            animation: isUrgent ? 'pulse 1s infinite' : 'none'
+            animation: isUrgent ? 'pulse 1s infinite' : 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.3rem'
           }}>
-            {timeLeft > 0 ? `${timeLeft}s` : 'Time Expired'}
+            <IconClock size={13} /> {timeLeft > 0 ? `${timeLeft}s` : '0s'}
           </span>
-        </div>
-
-        {/* Visual countdown track */}
-        <div style={{
-          width: '100%',
-          height: '7px',
-          background: 'var(--border-color)',
-          borderRadius: '4px',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            width: `${Math.max(0, Math.min(100, (timeLeft / LISTEN_TIME_LIMIT) * 100))}%`,
-            height: '100%',
-            background: isUrgent
-              ? 'linear-gradient(90deg, #dc2626, #ef4444)'
-              : 'linear-gradient(90deg, var(--primary), var(--secondary))',
-            transition: 'width 0.25s linear'
-          }} />
-        </div>
-
-        <div style={{ marginTop: '0.45rem', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-          {isPlaybackDeactivated ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-              <IconLock size={13} /> Playback locked — ready to record!
-            </span>
-          ) : (
-            'Pressing "Ready" or reaching 0s locks playback.'
-          )}
         </div>
       </div>
 
-      {/* Waveform panel */}
+      {/* ── Sleek Progress Indicator ── */}
       <div style={{
-        background: 'var(--bg-card-2)',
-        border: '1.5px solid var(--border-color)',
-        borderRadius: 'var(--radius-sm)',
-        padding: '1rem',
-        marginBottom: '1.25rem'
+        width: '100%',
+        height: '4px',
+        background: 'rgba(0,0,0,0.06)',
+        borderRadius: '2px',
+        overflow: 'hidden'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '0.5rem' }}>
-          <span>TARGET WAVEFORM</span>
-          <span>{duration.toFixed(1)}s</span>
+        <div style={{
+          width: `${Math.max(0, Math.min(100, (timeLeft / LISTEN_TIME_LIMIT) * 100))}%`,
+          height: '100%',
+          background: isUrgent
+            ? 'linear-gradient(90deg, #dc2626, #ef4444)'
+            : 'linear-gradient(90deg, var(--primary), var(--secondary))',
+          transition: 'width 0.25s linear'
+        }} />
+      </div>
+
+      {/* ── Glowing Waveform Stage Box (Compact 65px height) ── */}
+      <div className="waveform-stage-box">
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: '#7c3aed', fontWeight: 800, marginBottom: '0.2rem' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <IconWaveform size={13} color="#7c3aed" />
+            <span>TARGET WAVEFORM</span>
+          </span>
+          <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>{duration.toFixed(1)}s Sound</span>
         </div>
         <WaveformDisplay
           bars={bars}
           progress={progress}
-          color="#f4845f"
-          height={90}
+          color="#7c3aed"
+          height={65}
         />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
           <span>0s</span>
           <span>{(duration / 2).toFixed(1)}s</span>
           <span>{duration.toFixed(1)}s</span>
         </div>
       </div>
 
-      {/* ── Play Demo & Ready Action Buttons ── */}
+      {/* ── Action Buttons: 3D Tactile Arcade Feel ── */}
       <div style={{
         display: 'flex',
         justifyContent: 'center',
-        gap: '0.85rem',
-        flexWrap: 'wrap',
-        marginBottom: '1.25rem'
+        gap: '0.65rem',
+        flexWrap: 'wrap'
       }}>
-        {/* Replay Demo Sound button */}
         <button
-          className="btn btn-secondary"
+          className="btn-arcade-secondary"
           onClick={playDemoSound}
           disabled={isPlaying || isPlaybackDeactivated || roomState?.isPaused}
           style={{
-            padding: '0.85rem 1.8rem',
-            fontSize: '1rem',
+            padding: '0.52rem 1.3rem',
+            fontSize: '0.9rem',
             opacity: (isPlaybackDeactivated || roomState?.isPaused) ? 0.45 : 1,
             cursor: (isPlaybackDeactivated || roomState?.isPaused) ? 'not-allowed' : 'pointer',
-            border: isPlaying ? '1.5px solid var(--primary)' : undefined,
-            color: isPlaying ? 'var(--primary)' : undefined
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem'
           }}
           title={
             roomState?.isPaused
               ? 'Game is currently paused'
               : isPlaybackDeactivated
-                ? 'Playback deactivated because ready status was set'
+                ? 'Playback deactivated'
                 : 'Replay'
           }
         >
           {isPlaying ? (
             <>
-              <IconVolume size={18} /> Playing Target Demo...
+              <IconVolume size={16} /> Playing Demo...
             </>
           ) : isPlaybackDeactivated ? (
             <>
-              <IconLock size={17} /> Playback Locked
+              <IconLock size={15} /> Playback Locked
             </>
           ) : (
             <>
-              <IconReplay size={18} /> Replay
+              <IconReplay size={16} /> Replay Demo
             </>
           )}
         </button>
 
-        {/* Ready button */}
         <button
-          className={isMyPlayerReady ? 'btn btn-secondary' : 'btn btn-success'}
+          className={isMyPlayerReady ? 'btn btn-secondary' : 'btn-arcade-success'}
           onClick={handleMarkReady}
           disabled={isMyPlayerReady}
           style={{
-            padding: '0.85rem 1.8rem',
-            fontSize: '1rem',
-            background: isMyPlayerReady ? 'rgba(74, 222, 128, 0.2)' : undefined,
-            color: isMyPlayerReady ? '#4ade80' : undefined,
-            border: isMyPlayerReady ? '1.5px solid #4ade80' : undefined,
-            cursor: isMyPlayerReady ? 'default' : 'pointer',
-            boxShadow: !isMyPlayerReady ? '0 0 16px rgba(74, 222, 128, 0.35)' : 'none'
+            padding: '0.52rem 1.6rem',
+            fontSize: '0.92rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            cursor: isMyPlayerReady ? 'default' : 'pointer'
           }}
         >
           {isMyPlayerReady ? (
             <>
-              <IconCheck size={18} /> Ready
+              <IconCheck size={16} /> Ready
             </>
           ) : (
             <>
-              <IconCheck size={18} /> I'm Ready
+              <IconCheck size={16} /> I'm Ready
             </>
           )}
         </button>
       </div>
 
-      {/* ── Player Readiness Roster ── */}
+      {/* ── Arcade Player Readiness Tokens ── */}
       <div style={{
-        background: 'var(--bg-card-2)',
-        border: '1.5px solid var(--border-color)',
-        borderRadius: 'var(--radius-sm)',
-        padding: '0.75rem 1rem',
-        marginBottom: '1.25rem'
+        background: 'rgba(255, 248, 240, 0.65)',
+        border: '1.5px solid rgba(232, 221, 208, 0.75)',
+        borderRadius: '16px',
+        padding: '0.35rem 0.65rem'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)' }}>
-            PLAYER STATUS
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <IconUsers size={12} /> SQUAD STATUS
           </span>
           <span style={{
-            fontSize: '0.78rem',
+            fontSize: '0.74rem',
             fontWeight: 800,
-            color: allReady ? 'var(--secondary)' : 'var(--primary)'
+            color: allReady ? '#16a34a' : 'var(--primary)'
           }}>
             {readyPlayersCount} / {players.length} Ready
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           {players.map(p => {
             const isReady = Boolean(listenReadyMap[p.id]);
             const isMe = p.id === myPlayerId;
             return (
               <div
                 key={p.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: '20px',
-                  background: isReady ? 'rgba(61, 191, 123, 0.15)' : 'var(--bg-card)',
-                  border: `1.5px solid ${isReady ? '#3dbf7b' : 'var(--border-color)'}`,
-                  fontSize: '0.82rem',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
-                }}
+                className={`arcade-player-token ${isReady ? 'ready' : ''}`}
               >
-                <PlayerAvatar name={p.name} avatar={p.avatar} size={22} />
-                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{p.name} {isMe ? '(you)' : ''}</span>
-                <span style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 800,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.2rem',
-                  color: isReady ? '#166534' : 'var(--text-muted)'
-                }}>
-                  {isReady ? <IconCheck size={14} color="#166534" /> : <IconHeadphones size={14} />}
-                </span>
+                <PlayerAvatar name={p.name} avatar={p.avatar} size={18} />
+                <span style={{ color: 'var(--text-main)' }}>{p.name}{isMe ? ' (you)' : ''}</span>
+                {isReady ? <IconCheck size={12} color="#16a34a" /> : <IconHeadphones size={12} color="var(--text-muted)" />}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* ── Host & Client Action Status Area (High Contrast) ── */}
+      {/* ── Countdown or Waiting Status Banner ── */}
       {allReady ? (
         <div style={{
-          padding: '1.1rem 1.5rem',
+          padding: '0.55rem 1rem',
           background: 'linear-gradient(135deg, #ea580c, #f97316)',
           borderRadius: 'var(--radius-sm)',
           border: '2px solid #c2410c',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.85rem',
-          boxShadow: '0 6px 24px rgba(234, 88, 12, 0.35)',
+          gap: '0.65rem',
+          boxShadow: '0 4px 16px rgba(234, 88, 12, 0.3)',
           animation: 'popIn 0.3s ease-out'
         }}>
           <span style={{
-            fontSize: '1.4rem',
+            fontSize: '1.1rem',
             fontWeight: 900,
             color: '#c2410c',
             fontFamily: 'var(--font-display)',
             background: '#ffffff',
-            padding: '0.25rem 0.85rem',
-            borderRadius: '14px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: '50px',
-            animation: 'pulse 1s infinite'
+            padding: '0.15rem 0.65rem',
+            borderRadius: '10px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.18)'
           }}>
             {countdownToStart !== null ? `${countdownToStart}s` : '5s'}
           </span>
           <span style={{
-            fontSize: '1.1rem',
+            fontSize: '0.92rem',
             fontWeight: 800,
             color: '#ffffff',
-            textShadow: '0 1px 3px rgba(0,0,0,0.3)',
             letterSpacing: '0.01em'
           }}>
-            All players ready! Recording starts in {countdownToStart !== null ? `${countdownToStart}s` : '5s'}...
+            All ready! Recording starts in {countdownToStart !== null ? `${countdownToStart}s` : '5s'}...
           </span>
         </div>
       ) : (
         <div style={{
-          padding: '0.9rem 1.3rem',
+          padding: '0.45rem 0.8rem',
           background: 'var(--bg-card-2)',
           borderRadius: 'var(--radius-sm)',
           border: '1.5px solid var(--border-color)',
           color: 'var(--text-main)',
           fontWeight: 700,
-          fontSize: '0.92rem',
+          fontSize: '0.8rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.5rem'
+          gap: '0.4rem'
         }}>
           {isHost ? (
             <>
-              <IconClock size={16} color="var(--primary)" />
+              <IconClock size={14} color="var(--primary)" />
               <span>Waiting for players (<strong style={{ color: 'var(--primary)' }}>{readyPlayersCount} / {players.length}</strong> ready)...</span>
             </>
           ) : (
             <>
-              <IconHeadphones size={16} color="var(--secondary)" />
-              <span>Listening &amp; practicing... (<strong style={{ color: 'var(--secondary)' }}>{readyPlayersCount} / {players.length}</strong> players ready)</span>
+              <IconHeadphones size={14} color="var(--secondary)" />
+              <span>Listening &amp; practicing... (<strong style={{ color: 'var(--secondary)' }}>{readyPlayersCount} / {players.length}</strong> ready)</span>
             </>
           )}
         </div>

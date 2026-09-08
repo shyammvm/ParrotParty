@@ -3,7 +3,7 @@ import { SOUND_PACKS, MYSTERY_PACK_ID, shuffleArray, getAllSounds, loadSoundUrl 
 import { blobToDataURL, peerManager } from '../utils/peerManager';
 import { extractWaveformBars } from './WaveformDisplay';
 import { PlayerAvatar } from '../utils/avatarUtils';
-import { IconCrown, IconMusic, IconShuffle, IconAlertTriangle, IconClock, IconArrowRight } from './Icons';
+import { IconCrown, IconMusic, IconShuffle, IconAlertTriangle, IconClock, IconArrowRight, IconCheck, IconDice } from './Icons';
 
 export default function PromptSelector({ roomState, onSelectSoundPack }) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -22,7 +22,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
   const mysteryPack = {
     id: MYSTERY_PACK_ID,
     title: 'Mystery Mix (Any Pack)',
-    icon: '🎲',
+    icon: 'dice',
     description: `Picks ${roundSoundsCount} completely random sounds across all available sound packs!`,
     count: allSounds.length,
     sounds: allSounds,
@@ -128,7 +128,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
       }
 
       const finalTitle = isMysterySelected
-        ? `🎲 Mystery Mix (${roundSoundsCount} Sounds)`
+        ? `Mystery Mix (${roundSoundsCount} Sounds)`
         : `${selectedPack.title} (${roundSoundsCount} Random Sounds)`;
 
       onSelectSoundPack(finalTitle, soundPackItems);
@@ -263,7 +263,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
           </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', marginBottom: '0.75rem', maxHeight: '44vh', overflowY: 'auto', scrollbarWidth: 'thin', paddingRight: '0.2rem' }}>
           
           {/* 1. Mystery Mix Card (Random from all packs) */}
           <div
@@ -311,7 +311,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                       alignItems: 'center',
                       gap: '0.3rem'
                     }}>
-                      {isHost ? '✓ Selected' : <><IconCrown size={12} /> Chosen by {hostPlayer?.name || 'Host'}</>}
+                      {isHost ? <><IconCheck size={12} /> Selected</> : <><IconCrown size={12} /> Chosen by {hostPlayer?.name || 'Host'}</>}
                     </span>
                   )}
                   {isMysteryEligible ? (
@@ -374,7 +374,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                           alignItems: 'center',
                           gap: '0.3rem'
                         }}>
-                          {isHost ? '✓ Selected' : <><IconCrown size={12} /> Chosen by {hostPlayer?.name || 'Host'}</>}
+                          {isHost ? <><IconCheck size={12} /> Selected</> : <><IconCrown size={12} /> Chosen by {hostPlayer?.name || 'Host'}</>}
                         </span>
                       )}
                       {isEligible ? (
@@ -434,7 +434,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
             className="btn btn-primary"
             onClick={handleConfirmPack}
             disabled={isGenerating || !selectedPack || !isCurrentSelectedEligible}
-            style={{ width: '100%', padding: '1rem', fontSize: '1.08rem' }}
+            style={{ width: '100%', padding: '0.75rem 1.2rem', fontSize: '1.02rem' }}
           >
             {isGenerating
               ? `Preparing Round (${progress.current}/${progress.total})...`

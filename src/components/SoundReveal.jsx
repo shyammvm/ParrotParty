@@ -297,7 +297,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
   }).sort((a, b) => b.cumulativeScore - a.cumulativeScore);
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
       {/* Floating Reaction Particles */}
       <div style={{
         position: 'fixed',
@@ -336,17 +336,17 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
         ))}
       </div>
 
-      {/* ── Live Leaderboard Bar ── */}
-      <div className="card" style={{ padding: '0.75rem 1.25rem', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <IconTrophy size={14} /> LIVE STANDINGS (Sound {currentSoundIndex + 1}/{totalSounds})
+      {/* ── Compact Live Leaderboard Bar ── */}
+      <div className="card" style={{ padding: '0.35rem 0.75rem', marginBottom: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+            <IconTrophy size={13} /> LIVE STANDINGS (Sound {currentSoundIndex + 1}/{totalSounds})
           </span>
-          <span style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 700 }}>
-            Revealing: {revealPlayerIndex + 1} of {players.length} Players
+          <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: 700 }}>
+            Revealing {revealPlayerIndex + 1} of {players.length}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
+        <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.15rem' }}>
           {leaderboard.map((p, idx) => {
             const isCurrentRevealed = p.id === currentPlayer?.id;
             return (
@@ -355,20 +355,20 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.35rem 0.65rem',
-                  borderRadius: '20px',
+                  gap: '0.35rem',
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: '16px',
                   background: isCurrentRevealed ? 'rgba(244, 132, 95, 0.18)' : 'var(--bg-card-2)',
                   border: isCurrentRevealed ? '1.5px solid var(--primary)' : '1.5px solid var(--border-color)',
                   flexShrink: 0
                 }}
               >
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>
                   #{idx + 1}
                 </span>
-                <PlayerAvatar name={p.name} avatar={p.avatar} size={24} />
-                <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{p.name}</span>
-                <strong style={{ fontSize: '0.88rem', color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>
+                <PlayerAvatar name={p.name} avatar={p.avatar} size={20} />
+                <span style={{ fontSize: '0.76rem', fontWeight: 600 }}>{p.name}</span>
+                <strong style={{ fontSize: '0.8rem', color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>
                   {p.cumulativeScore}
                 </strong>
               </div>
@@ -377,74 +377,33 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
         </div>
       </div>
 
-      {/* ── Main Player Reveal Card ── */}
-      <div className="card" style={{ textAlign: 'center', position: 'relative' }}>
-        {/* Sound prompt title pill */}
-        <div style={{
-          display: 'inline-block',
-          padding: '0.25rem 0.85rem',
-          background: 'rgba(244, 132, 95, 0.1)',
-          border: '1.5px solid rgba(244, 132, 95, 0.35)',
-          borderRadius: '20px',
-          fontSize: '0.78rem',
-          color: 'var(--primary)',
-          fontWeight: 700,
-          marginBottom: '1rem',
-          fontFamily: 'var(--font-display)'
-        }}>
-          SOUND {currentSoundIndex + 1}: {currentSound?.title}
-        </div>
-
-        {/* Current Player Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
-            <PlayerAvatar
-              name={currentPlayer?.name || 'Player'}
-              avatar={currentPlayer?.avatar}
-              size={76}
-              style={{
-                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                border: '3px solid rgba(255,255,255,0.9)'
-              }}
-            />
-            {isPlayingAudio && playingAudioType === 'recording' && (
-              <span style={{
-                position: 'absolute',
-                bottom: -2,
-                right: -4,
-                background: 'var(--primary)',
-                color: '#fff',
-                borderRadius: '50%',
-                width: 24,
-                height: 24,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                animation: 'pulseGreen 1.2s infinite'
-              }}>
-                <IconVolume size={14} />
-              </span>
-            )}
+      {/* ── Main Player Reveal Card (Compact 1-Page Design) ── */}
+      <div className="card" style={{ textAlign: 'center', position: 'relative', padding: '0.75rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+        {/* Header: Sound Pill + Player Info */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <span style={{
+              padding: '0.18rem 0.6rem',
+              background: 'rgba(244, 132, 95, 0.1)',
+              border: '1.5px solid rgba(244, 132, 95, 0.35)',
+              borderRadius: '20px',
+              fontSize: '0.72rem',
+              color: 'var(--primary)',
+              fontWeight: 800,
+              fontFamily: 'var(--font-display)'
+            }}>
+              SOUND {currentSoundIndex + 1}: {currentSound?.title}
+            </span>
           </div>
-          <h2 style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '1.6rem',
-            fontWeight: 700,
-            marginBottom: '0.2rem',
-            color: 'var(--text-main)'
-          }}>
-            {currentPlayer?.name}'s Mimic
-          </h2>
+
           {funnyBadge && stage === 'SCORE_REVEALED' && (
             <span style={{
-              display: 'inline-block',
               background: 'rgba(244,132,95,0.15)',
               color: 'var(--primary)',
               fontWeight: 700,
-              fontSize: '0.85rem',
-              padding: '0.2rem 0.8rem',
-              borderRadius: '20px',
+              fontSize: '0.76rem',
+              padding: '0.15rem 0.65rem',
+              borderRadius: '16px',
               border: '1px solid rgba(244,132,95,0.35)'
             }}>
               {funnyBadge}
@@ -452,21 +411,64 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
           )}
         </div>
 
+        {/* Current Player Row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', margin: '0.1rem 0' }}>
+          <div style={{ position: 'relative' }}>
+            <PlayerAvatar
+              name={currentPlayer?.name || 'Player'}
+              avatar={currentPlayer?.avatar}
+              size={48}
+              style={{
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                border: '2.5px solid rgba(255,255,255,0.9)'
+              }}
+            />
+            {isPlayingAudio && playingAudioType === 'recording' && (
+              <span style={{
+                position: 'absolute',
+                bottom: -2,
+                right: -3,
+                background: 'var(--primary)',
+                color: '#fff',
+                borderRadius: '50%',
+                width: 18,
+                height: 18,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                animation: 'pulseGreen 1.2s infinite'
+              }}>
+                <IconVolume size={11} />
+              </span>
+            )}
+          </div>
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.35rem',
+            fontWeight: 800,
+            margin: 0,
+            color: 'var(--text-main)'
+          }}>
+            {currentPlayer?.name}'s Mimic
+          </h2>
+        </div>
+
         {/* Audio status banner */}
         {isPlayingAudio && (
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.55rem',
+            justifyContent: 'center',
+            gap: '0.4rem',
             background: 'rgba(244, 132, 95, 0.12)',
-            padding: '0.45rem 1.15rem',
-            borderRadius: '20px',
-            marginBottom: '1rem',
+            padding: '0.25rem 0.8rem',
+            borderRadius: '16px',
             color: 'var(--primary)',
             fontWeight: 700,
-            fontSize: '0.85rem'
+            fontSize: '0.78rem'
           }}>
-            <IconWaveform size={16} />
+            <IconWaveform size={14} />
             <span>
               {playingAudioType === 'demo' ? 'Playing Target Reference Sound...' : `Listening to ${currentPlayer?.name}...`}
             </span>
@@ -477,23 +479,22 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: '0.65rem',
-          flexWrap: 'wrap',
-          marginBottom: '1.25rem'
+          gap: '0.5rem',
+          flexWrap: 'wrap'
         }}>
           <button
             className="btn btn-secondary"
             onClick={handleReplayRecording}
             disabled={isPlayingAudio || !playerRecording?.audioDataUrl || roomState?.isPaused}
-            style={{ padding: '0.55rem 1.2rem', fontSize: '0.88rem' }}
+            style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
           >
             {isPlayingAudio && playingAudioType === 'recording' ? (
               <>
-                <IconVolume size={16} /> Playing Voice...
+                <IconVolume size={14} /> Playing Voice...
               </>
             ) : (
               <>
-                <IconReplay size={16} /> Replay Recording
+                <IconReplay size={14} /> Replay Recording
               </>
             )}
           </button>
@@ -501,31 +502,30 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
             className="btn btn-secondary"
             onClick={handlePlayTargetDemo}
             disabled={isPlayingAudio || !currentSound?.targetAudioUrl || roomState?.isPaused}
-            style={{ padding: '0.55rem 1.2rem', fontSize: '0.88rem' }}
+            style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
           >
             {isPlayingAudio && playingAudioType === 'demo' ? (
               <>
-                <IconVolume size={16} /> Playing Demo...
+                <IconVolume size={14} /> Playing Demo...
               </>
             ) : (
               <>
-                <IconPlay size={15} fill="currentColor" /> Play Target Demo
+                <IconPlay size={13} fill="currentColor" /> Play Target Demo
               </>
             )}
           </button>
         </div>
 
-        {/* Floating Emoji Reactions Bar (Players can react anytime!) */}
+        {/* Floating Emoji Reactions Bar */}
         <div style={{
           background: 'var(--bg-card-2)',
           border: '1.5px solid var(--border-color)',
           borderRadius: 'var(--radius-sm)',
-          padding: '0.6rem 1rem',
-          marginBottom: '1.5rem',
+          padding: '0.3rem 0.6rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.5rem',
+          gap: '0.4rem',
           flexWrap: 'wrap'
         }}>
           {['😂', '👏', '💀', '🔥', '🏆', '😱', '💩'].map(emoji => (
@@ -535,13 +535,13 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
               style={{
                 background: 'transparent',
                 border: 'none',
-                fontSize: '1.4rem',
+                fontSize: '1.2rem',
                 cursor: 'pointer',
-                padding: '0.2rem 0.4rem',
-                borderRadius: '8px',
+                padding: '0.15rem 0.35rem',
+                borderRadius: '6px',
                 transition: 'transform 0.15s ease',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.3)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.25)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
               title={`React with ${emoji}`}
             >
@@ -550,121 +550,119 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
           ))}
         </div>
 
-        {/* ── Score display ── */}
+        {/* ── Score display (Compact & punchy) ── */}
         {stage === 'SCORE_REVEALED' && (
           <div style={{
             background: 'var(--bg-card-2)',
             border: '1.5px solid var(--border-color)',
             borderRadius: 'var(--radius-sm)',
-            padding: '1.25rem',
-            marginBottom: '1.5rem'
+            padding: '0.65rem 0.9rem'
           }}>
             <div style={{
               fontFamily: 'var(--font-display)',
-              fontSize: '3.8rem',
+              fontSize: '2.4rem',
               fontWeight: 800,
               color: 'var(--primary)',
               lineHeight: 1,
-              marginBottom: '0.4rem'
+              marginBottom: '0.2rem'
             }}>
               {animatedScore}
-              <span style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--text-muted)', marginLeft: '0.2rem' }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-muted)', marginLeft: '0.2rem' }}>
                 /100
               </span>
             </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, marginBottom: '1.25rem' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.45rem' }}>
               Sound Match Accuracy
             </p>
 
-            {/* Breakdown Bars */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxWidth: 360, margin: '0 auto' }}>
+            {/* Breakdown Bars (compact height: 5px) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxWidth: 360, margin: '0 auto' }}>
               <div className="score-row">
-                <div className="score-label-bar">
+                <div className="score-label-bar" style={{ fontSize: '0.72rem' }}>
                   <span>Pitch Accuracy</span>
-                  <strong>{playerRecording?.scoreResult?.pitchScore ?? 80}%</strong>
+                  <strong>{playerRecording?.scoreResult?.pitchScore ?? 0}%</strong>
                 </div>
-                <div className="score-bar-bg">
-                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.pitchScore ?? 80}%`, background: 'var(--primary)' }} />
+                <div className="score-bar-bg" style={{ height: '5px' }}>
+                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.pitchScore ?? 0}%`, background: 'var(--primary)' }} />
                 </div>
               </div>
               <div className="score-row">
-                <div className="score-label-bar">
+                <div className="score-label-bar" style={{ fontSize: '0.72rem' }}>
                   <span>Rhythm &amp; Timing</span>
-                  <strong>{playerRecording?.scoreResult?.rhythmScore ?? 80}%</strong>
+                  <strong>{playerRecording?.scoreResult?.rhythmScore ?? 0}%</strong>
                 </div>
-                <div className="score-bar-bg">
-                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.rhythmScore ?? 80}%`, background: 'var(--secondary)' }} />
+                <div className="score-bar-bg" style={{ height: '5px' }}>
+                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.rhythmScore ?? 0}%`, background: 'var(--secondary)' }} />
                 </div>
               </div>
               <div className="score-row">
-                <div className="score-label-bar">
+                <div className="score-label-bar" style={{ fontSize: '0.72rem' }}>
                   <span>Voice Timbre</span>
-                  <strong>{playerRecording?.scoreResult?.timbreScore ?? 80}%</strong>
+                  <strong>{playerRecording?.scoreResult?.timbreScore ?? 0}%</strong>
                 </div>
-                <div className="score-bar-bg">
-                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.timbreScore ?? 80}%`, background: 'var(--accent)' }} />
+                <div className="score-bar-bg" style={{ height: '5px' }}>
+                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.timbreScore ?? 0}%`, background: 'var(--accent)' }} />
                 </div>
               </div>
             </div>
           </div>
         )}
 
-
         {/* ── Host action button & non-host waiting message ── */}
         {stage === 'SCORE_REVEALED' && (
           <div>
             {isHost ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {!isLastPlayer ? (
                   <button
                     className="btn btn-primary"
                     onClick={handleAdvanceNextPlayer}
-                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    style={{ width: '100%', padding: '0.65rem 1.2rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
                   >
                     <span>Next Player ({revealPlayerIndex + 2}/{players.length})</span>
                     <span style={{
-                      fontSize: '0.85rem',
+                      fontSize: '0.78rem',
                       opacity: 0.85,
                       background: 'rgba(0,0,0,0.2)',
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: '10px'
+                      padding: '0.1rem 0.45rem',
+                      borderRadius: '8px'
                     }}>
                       {timeLeft}s
                     </span>
-                    <IconArrowRight size={18} />
+                    <IconArrowRight size={16} />
                   </button>
                 ) : !isLastSound ? (
                   <button
                     className="btn btn-primary"
                     onClick={onNextSound}
-                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    style={{ width: '100%', padding: '0.65rem 1.2rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
                   >
                     <span>Proceed to Next Sound ({currentSoundIndex + 2}/{totalSounds})</span>
                     <span style={{
-                      fontSize: '0.85rem',
+                      fontSize: '0.78rem',
                       opacity: 0.85,
                       background: 'rgba(0,0,0,0.2)',
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: '10px'
+                      padding: '0.1rem 0.45rem',
+                      borderRadius: '8px'
                     }}>
                       {timeLeft}s
                     </span>
-                    <IconArrowRight size={18} />
+                    <IconArrowRight size={16} />
                   </button>
                 ) : (
                   <button
                     className="btn btn-success"
                     onClick={onFinishAllSounds}
-                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    style={{ width: '100%', padding: '0.65rem 1.2rem', fontSize: '0.98rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
                   >
-                    <IconTrophy size={20} />
+                    <IconTrophy size={18} />
                     <span>View Final Leaderboard</span>
                     <span style={{
-                      fontSize: '0.85rem',
+                      fontSize: '0.78rem',
                       opacity: 0.85,
                       background: 'rgba(0,0,0,0.2)',
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: '10px'
+                      padding: '0.1rem 0.45rem',
+                      borderRadius: '8px'
                     }}>
                       {timeLeft}s
                     </span>
@@ -672,8 +670,8 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                 )}
               </div>
             ) : (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
-                <IconClock size={15} />
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: '0.2rem 0', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
+                <IconClock size={14} />
                 {!isLastPlayer
                   ? `Next player advancing in ${timeLeft}s (or when host clicks next)...`
                   : (!isLastSound ? `Round finished — next sound in ${timeLeft}s...` : `All sounds finished — final results in ${timeLeft}s...`)
@@ -684,8 +682,8 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
         )}
 
         {stage !== 'SCORE_REVEALED' && !isHost && (
-          <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
-            <IconHeadphones size={15} /> Listening to playback... (Voice chat will resume right after)
+          <p style={{ margin: '0.4rem 0 0', color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
+            <IconHeadphones size={14} /> Listening to playback... (Voice chat will resume right after)
           </p>
         )}
       </div>

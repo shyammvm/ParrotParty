@@ -3,7 +3,7 @@ import { peerManager } from '../utils/peerManager';
 import { roomDirectory } from '../utils/roomDirectory';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import parrotLogo from '../assets/parrot-party.png';
-import { IconLogOut, IconRefresh, IconLock, IconSettings } from './Icons';
+import { IconLogOut, IconRefresh, IconLock, IconSettings, IconX } from './Icons';
 
 export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, onLeaveRoom }) {
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('parrot_player_name') || localStorage.getItem('tintom_player_name') || '');
@@ -331,10 +331,10 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
               type="button"
               className="btn btn-secondary"
               onClick={handleDismissRejoin}
-              style={{ padding: '0.45rem 0.65rem', fontSize: '0.82rem' }}
+              style={{ padding: '0.45rem 0.65rem', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
               title="Dismiss saved room"
             >
-              ✕
+              <IconX size={12} />
             </button>
           </div>
         </div>

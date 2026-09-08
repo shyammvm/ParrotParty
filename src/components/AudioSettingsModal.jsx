@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { audioDeviceManager } from '../utils/audioDeviceManager';
-import { IconHeadphones, IconMic, IconVolume } from './Icons';
+import { IconHeadphones, IconMic, IconVolume, IconX } from './Icons';
 
 export default function AudioSettingsModal({ isOpen, onClose }) {
   const [devices, setDevices] = useState([]);
@@ -181,13 +181,16 @@ export default function AudioSettingsModal({ isOpen, onClose }) {
             style={{
               background: 'transparent',
               border: 'none',
-              fontSize: '1.3rem',
               cursor: 'pointer',
               color: 'var(--text-muted)',
-              padding: '0.2rem 0.5rem'
+              padding: '0.2rem 0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
+            title="Close Settings"
           >
-            ✕
+            <IconX size={18} />
           </button>
         </div>
 

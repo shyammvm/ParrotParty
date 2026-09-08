@@ -7,7 +7,8 @@ import { voiceChatManager } from '../utils/voiceChatManager';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import WaveformDisplay from './WaveformDisplay';
 import PhaseIntroOverlay from './PhaseIntroOverlay';
-import { IconMic, IconVolume, IconSettings, IconCheck, IconClock, IconWaveform } from './Icons';
+import ParrotMascot from './ParrotMascot';
+import { IconMic, IconVolume, IconSettings, IconCheck, IconClock, IconWaveform, IconSparkles, IconUsers, IconFlame } from './Icons';
 
 const NUM_BARS = 120;
 const RECORD_TIME_LIMIT = 30; // 30-second recording phase limit
@@ -56,7 +57,8 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
 
   const isHost = roomState?.isHost;
   const players = roomState?.players || [];
-  const myPlayer = players.find(p => p.id === roomState?.myPlayerId);
+  const myPlayerId = roomState?.myPlayerId;
+  const myPlayer = players.find(p => p.id === myPlayerId);
   const hasRecorded = Boolean(myPlayer?.recordings?.[currentSoundIndex]);
   const allReady = players.length > 0 && players.every(p => Boolean(p.recordings?.[currentSoundIndex]));
 
@@ -356,6 +358,7 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
         pitchScore: 0,
         similarityScore: 0,
         rhythmScore: 0,
+        timbreScore: 0,
         funnyTitle: "Time Expired"
       }
     };
@@ -453,109 +456,141 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
       : 'rgba(244, 132, 95, 0.12)';
 
   return (
-    <div className="card" style={{ textAlign: 'center' }}>
-      <div style={{
-        display: 'inline-block', padding: '0.25rem 0.9rem',
-        background: 'rgba(244,132,95,0.12)', border: '1.5px solid rgba(244,132,95,0.4)',
-        borderRadius: '20px', fontSize: '0.8rem', color: '#c2410c',
-        fontWeight: 800, marginBottom: '0.85rem', fontFamily: 'var(--font-display)',
-        letterSpacing: '0.03em'
-      }}>
-        SOUND {currentSoundIndex + 1} OF {totalSounds}: {currentSound?.title}
-      </div>
+    <div className="card arcade-stage-card" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.42rem', padding: '0.75rem 1.1rem' }}>
+      {/* ── Top Arcade Header: Mascot + Sound Pill + Title + Voice Booth + 30s Timer ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <ParrotMascot
+            mode={phase === 'RECORDING' ? 'RECORD' : phase === 'COUNTDOWN' ? 'COUNTDOWN' : (hasRecorded || phase === 'DONE') ? 'SUCCESS' : 'RECORD'}
+            size={44}
+          />
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <span style={{
+                padding: '0.15rem 0.6rem',
+                background: 'rgba(244,132,95,0.14)',
+                border: '1.5px solid rgba(244,132,95,0.45)',
+                borderRadius: '20px',
+                fontSize: '0.7rem',
+                color: '#c2410c',
+                fontWeight: 800,
+                fontFamily: 'var(--font-display)',
+                letterSpacing: '0.04em'
+              }}>
+                SOUND {currentSoundIndex + 1}/{totalSounds}
+              </span>
+              <h2 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.3rem',
+                fontWeight: 800,
+                color: 'var(--text-main)',
+                margin: 0,
+                lineHeight: 1.15
+              }}>
+                {currentSound?.title || ''}
+              </h2>
+            </div>
+            <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              {phase === 'RECORDING' ? (
+                <>
+                  <IconFlame size={13} color="#ef4444" />
+                  <span>SQUAWK YOUR HEART OUT!</span>
+                </>
+              ) : hasRecorded ? (
+                <>
+                  <IconCheck size={13} color="#16a34a" />
+                  <span>Mimic locked in! Waiting for crew...</span>
+                </>
+              ) : (
+                <>
+                  <IconMic size={13} color="var(--primary)" />
+                  <span>Match the purple groove peaks!</span>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
 
-      {/* ── 30-Second Recording Phase Timer Bar ── */}
-      <div style={{
-        background: 'var(--bg-card-2)',
-        border: `1.5px solid ${isUrgent ? 'rgba(220,38,38,0.45)' : 'var(--border-color)'}`,
-        borderRadius: 'var(--radius-sm)',
-        padding: '0.85rem 1.1rem',
-        marginBottom: '1.25rem',
-        textAlign: 'left'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <IconClock size={16} /> ⏱️ Recording Time Remaining
-          </span>
+        {/* Right Utility Chips: Sleek Mic Pill + Arcade Countdown Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          <button
+            type="button"
+            className="arcade-mic-chip"
+            onClick={() => (onOpenSettings ? onOpenSettings() : setShowDevices(v => !v))}
+            title="Audio Input Device & Settings"
+          >
+            <IconMic size={13} color="var(--primary)" />
+            <span style={{ maxWidth: 85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {selectedDevice?.label ? selectedDevice.label.split('(')[0]?.trim() : 'Default Mic'}
+            </span>
+            <IconSettings size={11} color="var(--text-muted)" />
+          </button>
+
           <span style={{
             fontFamily: 'var(--font-display)',
-            fontSize: '1rem',
+            fontSize: '0.92rem',
             fontWeight: 800,
             color: timerBadgeColor,
             background: timerBadgeBg,
-            padding: '0.15rem 0.65rem',
+            padding: '0.18rem 0.65rem',
             borderRadius: '12px',
             border: `1.5px solid ${timerBadgeColor}`,
-            animation: isUrgent ? 'pulse 1s infinite' : 'none'
+            animation: isUrgent ? 'pulse 1s infinite' : 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.3rem'
           }}>
-            {timeLeft > 0 ? `${timeLeft}s` : "Time's Up!"}
+            <IconClock size={13} /> {timeLeft > 0 ? `${timeLeft}s` : "Time's Up!"}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Sleek Progress Indicator ── */}
+      <div style={{
+        width: '100%',
+        height: '4px',
+        background: 'rgba(0,0,0,0.06)',
+        borderRadius: '2px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          width: `${Math.max(0, Math.min(100, (timeLeft / RECORD_TIME_LIMIT) * 100))}%`,
+          height: '100%',
+          background: isUrgent
+            ? 'linear-gradient(90deg, #dc2626, #ef4444)'
+            : 'linear-gradient(90deg, var(--primary), var(--secondary))',
+          transition: 'width 0.25s linear'
+        }} />
+      </div>
+
+      {/* ── Glowing Waveform Stage Box (Compact 75px height) ── */}
+      <div className="waveform-stage-box">
+        {/* Stage Legend */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.72rem' }}>
+            <span style={{ color: '#7c3aed', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              <IconWaveform size={12} color="#7c3aed" /> TARGET GROOVE
+            </span>
+            <span style={{ color: '#e11d48', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              <IconMic size={12} color="#e11d48" /> YOUR VOICE
+            </span>
+          </div>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-main)', fontWeight: 700 }}>
+            {targetDuration.toFixed(1)}s Sound
           </span>
         </div>
 
-        {/* Visual countdown track */}
-        <div style={{
-          width: '100%',
-          height: '7px',
-          background: 'var(--border-color)',
-          borderRadius: '4px',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            width: `${Math.max(0, Math.min(100, (timeLeft / RECORD_TIME_LIMIT) * 100))}%`,
-            height: '100%',
-            background: isUrgent
-              ? 'linear-gradient(90deg, #dc2626, #ef4444)'
-              : 'linear-gradient(90deg, var(--primary), var(--secondary))',
-            transition: 'width 0.25s linear'
-          }} />
-        </div>
-
-        <div style={{ marginTop: '0.45rem', fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-          {hasRecorded ? (
-            <span style={{ color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-              <IconCheck size={13} /> You have recorded and submitted your mimic!
-            </span>
-          ) : timeLeft <= 0 ? (
-            <span style={{ color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-              <IconClock size={13} /> Time expired — moving to reveal!
-            </span>
-          ) : (
-            'You have 30 seconds to record. Hit "Start Recording" below when ready!'
-          )}
-        </div>
-      </div>
-
-      <div className="card-title" style={{ justifyContent: 'center', gap: '0.5rem' }}>
-        <IconMic size={22} /> Record Your Mimic!
-      </div>
-      <p className="card-subtitle">Try to match the purple waveform peaks with your voice!</p>
-
-      {/* ── Combined waveform comparison (warm card, no grey blob) ── */}
-      <div style={{
-        background: 'var(--bg-card-2)', border: '1.5px solid var(--border-color)',
-        borderRadius: '12px', padding: '1rem', marginBottom: '1rem'
-      }}>
-        {/* Legend */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem' }}>
-            <span style={{ color: '#7c3aed', fontWeight: 800 }}>■ TARGET</span>
-            <span style={{ color: '#e11d48', fontWeight: 800 }}>■ YOUR VOICE</span>
-          </div>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-main)', fontWeight: 700 }}>{targetDuration.toFixed(1)}s</span>
-        </div>
-
-        {/* Single overlaid canvas: target (purple) + recording (red) */}
         <WaveformDisplay
           bars={targetBars}
           recordedBars={recordedBars}
           progress={phase === 'RECORDING' ? recordingProgress : undefined}
           color="#7c3aed"
           recordColor="#e11d48"
-          height={110}
+          height={75}
         />
 
-        {/* Time ruler */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '0.4rem' }}>
+        {/* Time ruler & Live Mic Meter */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '0.15rem' }}>
           <span>0s</span>
           {phase === 'RECORDING' && (
             <span style={{ color: '#e11d48', fontWeight: 800 }}>
@@ -564,168 +599,156 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
           )}
           <span>{targetDuration.toFixed(1)}s</span>
         </div>
-      </div>
 
-      {/* ── Mic level ── */}
-      <div className="meter-bar" style={{ marginBottom: '0.75rem' }}>
-        <div className="meter-fill" style={{ width: `${phase === 'RECORDING' ? micLevel : (testState === 'recording' ? testLevel : 0)}%` }} />
-      </div>
-
-      {/* ── Mic selector (warm card, no grey blob) ── */}
-      <div style={{
-        background: 'var(--bg-card-2)', border: '1.5px solid var(--border-color)',
-        borderRadius: 'var(--radius-sm)', padding: '0.65rem 1rem',
-        marginBottom: '1rem', textAlign: 'left'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.82rem', color: 'var(--text-main)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
-            <IconMic size={15} color="var(--primary)" /> <strong>{selectedDevice?.label || 'Default Mic'}</strong>
-          </span>
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
-            <button className="btn btn-secondary"
-              onClick={handleMicTest}
-              disabled={testState === 'recording' || testState === 'playing' || phase !== 'IDLE'}
-              style={{ padding: '0.25rem 0.65rem', fontSize: '0.76rem' }}>
-              {testState === 'recording' ? 'Listening...' : testState === 'playing' ? 'Playing...' : <><IconVolume size={13} /> Test</>}
-            </button>
-            <button className="btn btn-secondary"
-              onClick={() => (onOpenSettings ? onOpenSettings() : setShowDevices(v => !v))}
-              style={{ padding: '0.25rem 0.65rem', fontSize: '0.76rem' }}>
-              <IconSettings size={13} /> Mic Settings
-            </button>
-          </div>
+        {/* Thin Live Mic Level */}
+        <div className="meter-bar" style={{ height: '4px', marginTop: '0.2rem', marginBottom: 0 }}>
+          <div className="meter-fill" style={{ width: `${phase === 'RECORDING' ? micLevel : (testState === 'recording' ? testLevel : 0)}%` }} />
         </div>
-        {testState === 'done' && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--success)', marginTop: '0.35rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-            <IconCheck size={14} /> Did you hear yourself? If not, tap Mic Settings to change input.
-          </p>
-        )}
-        {showDevices && devices.length > 0 && (
-          <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-            {devices.map(d => (
-              <button key={d.deviceId}
-                className={`btn ${d.deviceId === selectedDeviceId ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => {
-                  audioDeviceManager.setSelectedDeviceId(d.deviceId);
-                  setSelectedDeviceId(d.deviceId);
-                  setShowDevices(false);
-                  setTestState('idle');
-                }}
-                style={{ padding: '0.35rem 0.7rem', fontSize: '0.78rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                {d.deviceId === selectedDeviceId && <IconCheck size={13} />}
-                {d.label || `Mic ${d.deviceId.slice(0, 8)}`}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* ── Phase UI ── */}
+      {/* ── Phase Interaction Zone: 3D Arcade Tactile Action ── */}
       {phase === 'IDLE' && !hasRecorded && (
-        <button className="btn btn-accent" onClick={startCountdownAndRecord}
-          style={{ width: '100%', padding: '1rem', fontSize: '1.15rem' }}>
-          <IconMic size={20} /> Start Recording
+        <button
+          className="btn-arcade-3d"
+          onClick={startCountdownAndRecord}
+          style={{ width: '100%', padding: '0.68rem 1.4rem', fontSize: '1.06rem', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+        >
+          <IconMic size={19} /> START RECORDING
         </button>
       )}
 
       {phase === 'COUNTDOWN' && (
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '1rem',
-          margin: '0.25rem 0'
+          gap: '0.8rem',
+          padding: '0.35rem',
+          background: 'rgba(234, 88, 12, 0.1)',
+          borderRadius: '14px',
+          border: '1.5px solid rgba(234, 88, 12, 0.3)'
         }}>
           <span style={{
             fontSize: '0.85rem',
-            color: 'var(--text-muted)',
-            fontWeight: 700,
+            color: '#c2410c',
+            fontWeight: 800,
             textTransform: 'uppercase',
-            letterSpacing: '2px',
-            marginBottom: '0.4rem'
+            letterSpacing: '1px'
           }}>
-            Recording Starts In
+            RECORDING IN
           </span>
-          <div
+          <span
             key={countdown}
             style={{
-              fontSize: '5.5rem',
+              fontSize: '2.6rem',
               fontWeight: 900,
-              color: '#e05326',
+              color: '#ea580c',
               lineHeight: 1,
               animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
             }}
           >
             {countdown}
-          </div>
+          </span>
         </div>
       )}
 
       {phase === 'RECORDING' && (
-        <div>
-          <div style={{ fontSize: '3rem', fontWeight: 900, color: '#f43f5e', lineHeight: 1 }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.75rem',
+          padding: '0.35rem',
+          background: 'rgba(244, 63, 94, 0.12)',
+          border: '1.5px solid rgba(244, 63, 94, 0.35)',
+          borderRadius: '14px'
+        }}>
+          <div style={{ fontSize: '2.1rem', fontWeight: 900, color: '#f43f5e', lineHeight: 1 }}>
             {Math.max(0, targetDuration - elapsed).toFixed(1)}s
           </div>
-          <p style={{ color: '#f43f5e', fontWeight: 700, marginTop: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: '#f43f5e', boxShadow: '0 0 8px #f43f5e', display: 'inline-block' }} />
-            RECORDING — match the purple peaks!
-          </p>
+          <span style={{ color: '#f43f5e', fontWeight: 800, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f43f5e', boxShadow: '0 0 10px #f43f5e', display: 'inline-block' }} />
+            RECORDING — match the groove!
+          </span>
         </div>
       )}
 
       {phase === 'PROCESSING' && (
-        <div style={{ color: 'var(--secondary)', fontWeight: 700, padding: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-          <IconWaveform size={18} /> Scoring your recording...
+        <div style={{ color: 'var(--secondary)', fontWeight: 800, padding: '0.45rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center', fontSize: '0.9rem' }}>
+          <IconWaveform size={16} /> Scoring your squawk...
         </div>
       )}
 
       {(phase === 'DONE' || hasRecorded) && (
-        <div style={{ padding: '1rem', background: 'rgba(16,185,129,0.1)', border: '1px solid var(--success)', borderRadius: 'var(--radius-sm)' }}>
-          <strong style={{ color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
-            <IconCheck size={16} /> Submitted!
+        <div style={{ padding: '0.45rem 0.8rem', background: 'rgba(34, 197, 94, 0.12)', border: '1.5px solid #22c55e', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <strong style={{ color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.88rem' }}>
+            <IconCheck size={16} color="#15803d" /> Mimic Locked In!
           </strong>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700 }}>
             {players.filter(p => p.recordings?.[currentSoundIndex]).length} / {players.length} ready
-          </p>
+          </span>
         </div>
       )}
 
-      <div style={{ marginTop: '1.25rem', textAlign: 'left' }}>
-        <div className="player-list">
-          {players.map(p => (
-            <div key={p.id} className="player-item">
-              <div className="player-info">
-                <PlayerAvatar name={p.name} avatar={p.avatar} size={28} />
-                <span>{p.name}</span>
+      {/* ── Arcade Player Readiness Tokens ── */}
+      <div style={{
+        background: 'rgba(255, 248, 240, 0.65)',
+        border: '1.5px solid rgba(232, 221, 208, 0.75)',
+        borderRadius: '16px',
+        padding: '0.35rem 0.65rem'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <IconUsers size={12} /> SQUAD STATUS
+          </span>
+          <span style={{ fontSize: '0.74rem', fontWeight: 800, color: allReady ? '#16a34a' : 'var(--primary)' }}>
+            {players.filter(p => p.recordings?.[currentSoundIndex]).length} / {players.length} Ready
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {players.map(p => {
+            const hasDone = Boolean(p.recordings?.[currentSoundIndex]);
+            const isMe = p.id === myPlayerId;
+            return (
+              <div
+                key={p.id}
+                className={`arcade-player-token ${hasDone ? 'ready' : ''}`}
+              >
+                <PlayerAvatar name={p.name} avatar={p.avatar} size={18} />
+                <span style={{ color: 'var(--text-main)' }}>{p.name}{isMe ? ' (you)' : ''}</span>
+                {hasDone ? (
+                  <span style={{ color: '#16a34a', display: 'inline-flex', alignItems: 'center' }}>
+                    <IconCheck size={12} color="#16a34a" />
+                  </span>
+                ) : (
+                  <span style={{ color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center' }}>
+                    <IconMic size={12} color="var(--text-muted)" />
+                  </span>
+                )}
               </div>
-              {p.recordings?.[currentSoundIndex]
-                ? <span className="badge-ready" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><IconCheck size={13} /> Ready</span>
-                : <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><IconClock size={13} /> Recording...</span>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       {allReady && (
         <div style={{
-          marginTop: '1rem',
-          padding: '1.1rem 1.5rem',
+          padding: '0.55rem 1rem',
           background: 'linear-gradient(135deg, #15803d, #16a34a)',
           border: '2px solid #166534',
           borderRadius: 'var(--radius-sm)',
           color: '#ffffff',
           fontWeight: 800,
-          fontSize: '1.05rem',
+          fontSize: '0.92rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.65rem',
-          boxShadow: '0 6px 24px rgba(22, 163, 74, 0.35)',
-          textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+          gap: '0.5rem',
+          boxShadow: '0 4px 16px rgba(22, 163, 74, 0.3)',
           animation: 'popIn 0.3s ease-out'
         }}>
-          <IconCheck size={22} color="#ffffff" />
+          <IconCheck size={18} color="#ffffff" />
           <span>All mimics recorded! Moving to Review...</span>
         </div>
       )}

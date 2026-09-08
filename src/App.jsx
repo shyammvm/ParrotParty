@@ -13,6 +13,55 @@ import { voiceChatManager } from './utils/voiceChatManager';
 import { stopCurrentAudio } from './utils/audioPlayer';
 import { IconPause, IconPlay } from './components/Icons';
 
+class PhaseErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Phase render error caught by boundary:', error, errorInfo);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.phaseKey !== this.props.phaseKey && this.state.hasError) {
+      this.setState({ hasError: false, error: null });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="card" style={{ maxWidth: 520, margin: '2rem auto', textAlign: 'center', padding: '2rem 1.5rem' }}>
+          <h2 style={{ color: 'var(--danger)', marginBottom: '0.8rem', fontSize: '1.4rem' }}>Something went wrong</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1.2rem' }}>
+            {this.state.error?.message || 'A render error occurred while switching phases.'}
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <button
+              className="btn btn-secondary"
+              onClick={() => this.setState({ hasError: false, error: null })}
+            >
+              Try Again
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => window.location.reload()}
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 /**
  * Game Phase Flow (per sound in pack):
  *   LOBBY → PROMPT_SELECT → LISTEN → RECORDING → SOUND_REVEAL
@@ -263,9 +312,21 @@ export default function App() {
   };
 
   const gamePhase = roomState?.gamePhase || 'LOBBY';
+  const isGameActive = Boolean(roomState?.roomId && gamePhase && gamePhase !== 'LOBBY');
+
+  useEffect(() => {
+    if (isGameActive) {
+      document.body.classList.add('game-mode-active');
+    } else {
+      document.body.classList.remove('game-mode-active');
+    }
+    return () => {
+      document.body.classList.remove('game-mode-active');
+    };
+  }, [isGameActive]);
 
   return (
-    <>
+    <div className={`app-shell ${isGameActive ? 'game-active' : ''}`}>
       <Header
         roomState={roomState}
         myPlayerId={roomState?.myPlayerId}
@@ -286,42 +347,44 @@ export default function App() {
         className="phase-view-transition"
         style={{ width: '100%' }}
       >
-        {gamePhase === 'LOBBY' && (
-          <Lobby
-            roomState={roomState}
-            onStartSelectPrompt={handleHostStartPromptSelect}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onLeaveRoom={handleLeaveRoom}
-          />
-        )}
+        <PhaseErrorBoundary phaseKey={`${gamePhase}-${roomState?.currentSoundIndex || 0}`}>
+          {gamePhase === 'LOBBY' && (
+            <Lobby
+              roomState={roomState}
+              onStartSelectPrompt={handleHostStartPromptSelect}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onLeaveRoom={handleLeaveRoom}
+            />
+          )}
 
-        {gamePhase === 'PROMPT_SELECT' && (
-          <PromptSelector roomState={roomState} onSelectSoundPack={handleHostSelectSoundPack} />
-        )}
+          {gamePhase === 'PROMPT_SELECT' && (
+            <PromptSelector roomState={roomState} onSelectSoundPack={handleHostSelectSoundPack} />
+          )}
 
-        {gamePhase === 'LISTEN' && (
-          <ListenPhase roomState={roomState} onStartRecordingPhase={handleStartRecordingPhase} />
-        )}
+          {gamePhase === 'LISTEN' && (
+            <ListenPhase roomState={roomState} onStartRecordingPhase={handleStartRecordingPhase} />
+          )}
 
-        {gamePhase === 'RECORDING' && (
-          <RecordPhase
-            roomState={roomState}
-            onSoundComplete={handleSoundComplete}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-          />
-        )}
+          {gamePhase === 'RECORDING' && (
+            <RecordPhase
+              roomState={roomState}
+              onSoundComplete={handleSoundComplete}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+            />
+          )}
 
-        {gamePhase === 'SOUND_REVEAL' && (
-          <SoundReveal
-            roomState={roomState}
-            onNextSound={handleNextSound}
-            onFinishAllSounds={handleFinishAllSounds}
-          />
-        )}
+          {gamePhase === 'SOUND_REVEAL' && (
+            <SoundReveal
+              roomState={roomState}
+              onNextSound={handleNextSound}
+              onFinishAllSounds={handleFinishAllSounds}
+            />
+          )}
 
-        {gamePhase === 'LEADERBOARD' && (
-          <Leaderboard roomState={roomState} onPlayAgain={handlePlayAgainNextRound} />
-        )}
+          {gamePhase === 'LEADERBOARD' && (
+            <Leaderboard roomState={roomState} onPlayAgain={handlePlayAgainNextRound} />
+          )}
+        </PhaseErrorBoundary>
       </main>
 
       <AudioSettingsModal
@@ -418,6 +481,6 @@ export default function App() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -199,20 +199,30 @@ export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard
               <div className="score-row">
                 <div className="score-label-bar">
                   <span>Pitch Accuracy</span>
-                  <strong>{playerRecording?.scoreResult?.pitchScore || 80}%</strong>
+                  <strong>{playerRecording?.scoreResult?.pitchScore ?? 0}%</strong>
                 </div>
                 <div className="score-bar-bg">
-                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.pitchScore || 80}%`, background: 'var(--primary)' }} />
+                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.pitchScore ?? 0}%`, background: 'var(--primary)' }} />
                 </div>
               </div>
 
               <div className="score-row">
                 <div className="score-label-bar">
                   <span>Rhythm &amp; Timing</span>
-                  <strong>{playerRecording?.scoreResult?.rhythmScore || 85}%</strong>
+                  <strong>{playerRecording?.scoreResult?.rhythmScore ?? 0}%</strong>
                 </div>
                 <div className="score-bar-bg">
-                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.rhythmScore || 85}%`, background: 'var(--secondary)' }} />
+                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.rhythmScore ?? 0}%`, background: 'var(--secondary)' }} />
+                </div>
+              </div>
+
+              <div className="score-row">
+                <div className="score-label-bar">
+                  <span>Voice Timbre</span>
+                  <strong>{playerRecording?.scoreResult?.timbreScore ?? 0}%</strong>
+                </div>
+                <div className="score-bar-bg">
+                  <div className="score-bar-fill" style={{ width: `${playerRecording?.scoreResult?.timbreScore ?? 0}%`, background: 'var(--accent)' }} />
                 </div>
               </div>
             </div>
