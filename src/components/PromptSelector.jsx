@@ -186,20 +186,9 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
       </p>
 
       {/* ── Round Length Selector ── */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: 'rgba(255, 255, 255, 0.04)',
-        border: '1px solid var(--border-color)',
-        borderRadius: 'var(--radius)',
-        padding: '0.75rem 1.1rem',
-        marginBottom: '1.25rem',
-        flexWrap: 'wrap',
-        gap: '0.75rem'
-      }}>
+      <div className="round-length-box">
         <div>
-          <strong style={{ fontSize: '0.95rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <strong style={{ fontSize: '0.95rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             Match Length
           </strong>
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
@@ -209,7 +198,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
             }
           </span>
         </div>
-        <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: '12px' }}>
+        <div className="round-length-pill-group">
           {[5, 10].map(count => {
             const isActive = roundSoundsCount === count;
             return (
@@ -228,7 +217,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                   fontSize: '0.88rem',
                   cursor: isHost ? 'pointer' : 'default',
                   transition: 'all 0.15s ease',
-                  boxShadow: isActive ? '0 0 14px rgba(244,132,95,0.4)' : 'none'
+                  boxShadow: isActive ? '0 2px 10px rgba(244,132,95,0.35)' : 'none'
                 }}
               >
                 {count} Sounds
@@ -241,10 +230,10 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
       {loadError && (
         <div style={{
           padding: '0.75rem 1rem',
-          background: 'rgba(239, 68, 68, 0.15)',
-          border: '1px solid rgba(239, 68, 68, 0.4)',
+          background: 'rgba(239, 68, 68, 0.12)',
+          border: '1px solid rgba(239, 68, 68, 0.35)',
           borderRadius: '8px',
-          color: '#fca5a5',
+          color: '#ef4444',
           fontSize: '0.85rem',
           marginBottom: '1rem',
           display: 'flex',
@@ -260,15 +249,15 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
         <div style={{
           textAlign: 'center',
           padding: '2.5rem 1.5rem',
-          background: 'rgba(255, 255, 255, 0.03)',
-          border: '1px dashed var(--border-color)',
+          background: 'var(--bg-card-2)',
+          border: '1.5px dashed var(--border-color)',
           borderRadius: 'var(--radius)',
           marginBottom: '1.5rem'
         }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
             <IconMusic size={36} color="var(--text-muted)" />
           </div>
-          <h3 style={{ color: '#fff', marginBottom: '0.5rem' }}>No Sound Packs Found</h3>
+          <h3 style={{ color: 'var(--text-main)', marginBottom: '0.5rem', fontFamily: 'var(--font-display)' }}>No Sound Packs Found</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
             Drop a folder containing <code>.mp3</code> files inside <code>public/sounds/</code> and it will automatically appear here!
           </p>
@@ -279,27 +268,30 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
           {/* 1. Mystery Mix Card (Random from all packs) */}
           <div
             onClick={() => handleSelectPack(MYSTERY_PACK_ID, isMysteryEligible)}
+            className={`sound-pack-card mystery ${isMysterySelected ? 'selected' : ''} ${isHost && isMysteryEligible ? 'interactive' : ''}`}
             style={{
-              padding: '1.15rem 1.25rem',
-              background: isMysterySelected
-                ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(244, 132, 95, 0.2))'
-                : 'rgba(0,0,0,0.22)',
-              border: `2px solid ${isMysterySelected ? 'var(--primary)' : 'rgba(139, 92, 246, 0.35)'}`,
-              borderRadius: 'var(--radius)',
-              cursor: isHost && isMysteryEligible ? 'pointer' : (isHost ? 'not-allowed' : 'default'),
               opacity: isMysteryEligible ? 1 : 0.45,
-              transition: 'all 0.15s ease',
-              boxShadow: isMysterySelected ? '0 0 18px rgba(139, 92, 246, 0.3)' : 'none'
+              cursor: isHost && isMysteryEligible ? 'pointer' : (isHost ? 'not-allowed' : 'default')
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ width: 40, height: 40, borderRadius: '10px', background: 'rgba(139, 92, 246, 0.2)', border: '1px solid rgba(139, 92, 246, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <IconShuffle size={20} color="#c4b5fd" />
+                <div style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '10px',
+                  background: 'rgba(108, 99, 255, 0.12)',
+                  border: '1px solid rgba(108, 99, 255, 0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <IconShuffle size={20} color="var(--secondary)" />
                 </div>
                 <div>
-                  <strong style={{ fontSize: '1.05rem', color: '#fff' }}>Mystery Mix (Random from Any Pack)</strong>
-                  <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                  <strong className="sound-pack-title">Mystery Mix (Random from Any Pack)</strong>
+                  <span className="sound-pack-desc">
                     Selects {roundSoundsCount} completely random sounds across all packs!
                   </span>
                 </div>
@@ -311,7 +303,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                     <span style={{
                       fontSize: '0.72rem',
                       fontWeight: 800,
-                      background: 'var(--primary)',
+                      background: 'var(--secondary)',
                       color: '#fff',
                       padding: '0.2rem 0.6rem',
                       borderRadius: '12px',
@@ -323,16 +315,16 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                     </span>
                   )}
                   {isMysteryEligible ? (
-                    <span className="badge-ready" style={{ fontSize: '0.78rem', background: 'rgba(139, 92, 246, 0.25)', color: '#c4b5fd', border: '1px solid rgba(139,92,246,0.4)' }}>
+                    <span className="badge-ready" style={{ fontSize: '0.78rem', background: 'rgba(108, 99, 255, 0.12)', color: 'var(--secondary)', border: '1px solid rgba(108,99,255,0.3)' }}>
                       All {allSounds.length} Sounds
                     </span>
                   ) : (
-                    <span style={{ fontSize: '0.72rem', color: '#fca5a5', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                       <IconAlertTriangle size={12} /> Needs {roundSoundsCount} sounds ({allSounds.length} available)
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: '0.7rem', color: '#38bdf8', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--secondary)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
                   <IconShuffle size={12} /> 100% Surprise Shuffle
                 </span>
               </div>
@@ -348,23 +340,18 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
               <div
                 key={pack.id}
                 onClick={() => handleSelectPack(pack.id, isEligible)}
+                className={`sound-pack-card ${isSelected ? 'selected' : ''} ${isHost && isEligible ? 'interactive' : ''}`}
                 style={{
-                  padding: '1.15rem 1.25rem',
-                  background: isSelected ? 'rgba(139, 92, 246, 0.18)' : 'rgba(0,0,0,0.22)',
-                  border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border-color)'}`,
-                  borderRadius: 'var(--radius)',
-                  cursor: isHost && isEligible ? 'pointer' : (isHost ? 'not-allowed' : 'default'),
                   opacity: isEligible ? 1 : 0.45,
-                  transition: 'all 0.15s ease',
-                  boxShadow: isSelected ? '0 0 16px rgba(139, 92, 246, 0.25)' : 'none'
+                  cursor: isHost && isEligible ? 'pointer' : (isHost ? 'not-allowed' : 'default')
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <span style={{ fontSize: '1.85rem' }}>{pack.icon}</span>
                     <div>
-                      <strong style={{ fontSize: '1.05rem', color: '#fff' }}>{pack.title}</strong>
-                      <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      <strong className="sound-pack-title">{pack.title}</strong>
+                      <span className="sound-pack-desc">
                         {isEligible
                           ? `Picks ${roundSoundsCount} random sounds from this pack for the round`
                           : `Pack only has ${pack.sounds.length} sounds (needs at least ${roundSoundsCount})`
@@ -397,9 +384,9 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                       ) : (
                         <span style={{
                           fontSize: '0.72rem',
-                          color: '#fca5a5',
-                          background: 'rgba(239, 68, 68, 0.15)',
-                          border: '1px solid rgba(239, 68, 68, 0.35)',
+                          color: '#ef4444',
+                          background: 'rgba(239, 68, 68, 0.12)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
                           padding: '0.15rem 0.5rem',
                           borderRadius: '6px',
                           fontWeight: 700,
@@ -422,14 +409,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
                 {/* Sound chips preview */}
                 <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.6rem' }}>
                   {pack.sounds.map(s => (
-                    <span key={s.id} style={{
-                      fontSize: '0.72rem',
-                      background: 'rgba(16,185,129,0.12)',
-                      border: '1px solid rgba(16,185,129,0.3)',
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: '4px',
-                      color: 'var(--text-primary)'
-                    }}>
+                    <span key={s.id} className="sound-chip">
                       {s.title}
                     </span>
                   ))}
@@ -476,18 +456,11 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
           </button>
         </>
       ) : (
-        <div style={{
-          textAlign: 'center',
-          padding: '1.1rem 1.25rem',
-          background: 'rgba(255,255,255,0.04)',
-          borderRadius: 'var(--radius)',
-          border: '1.5px solid var(--border-color)',
-          marginTop: '1rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem' }}>
+        <div className="pack-status-box">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
             <PlayerAvatar name={hostPlayer?.name || 'Host'} avatar={hostPlayer?.avatar} size={28} />
             <div>
-              <strong style={{ fontSize: '0.95rem', color: '#fff' }}>{hostPlayer?.name || 'Host'}</strong>
+              <strong style={{ fontSize: '0.95rem', color: 'var(--text-main)' }}>{hostPlayer?.name || 'Host'}</strong>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}> selected </span>
               <strong style={{ color: 'var(--primary)', fontSize: '0.95rem' }}>{roundSoundsCount} Sounds</strong>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}> from </span>

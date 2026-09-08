@@ -34,119 +34,47 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
   const myPlayer = roomState?.players?.find(p => p.id === myPlayerId);
 
   return (
-    <header className="card" style={{ padding: '0.8rem 1.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+    <header className="card app-header">
+      <div className="header-container">
 
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Brand Group */}
+        <div className="header-brand">
           <img
             src={parrotLogo}
             alt="Parrot Party Logo"
             onError={(e) => {
               e.currentTarget.src = `${import.meta.env.BASE_URL}images/parrot-party.png`;
             }}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              objectFit: 'cover',
-              objectPosition: 'center',
-              boxShadow: '0 3px 10px rgba(56, 189, 248, 0.25)',
-              border: '2px solid rgba(255, 255, 255, 0.8)',
-              flexShrink: 0
-            }}
+            className="header-logo"
           />
-          <div>
-            <h1 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.3rem',
-              fontWeight: 700,
-              lineHeight: 1.1,
-              color: 'var(--text-main)',
-              letterSpacing: '0.01em'
-            }}>
-              Parrot Party
-            </h1>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-              Good vibes, terrible impressions.
-            </span>
+          <div className="header-title-group">
+            <h1 className="header-title">Parrot Party</h1>
+            <span className="header-tagline">Good vibes, terrible impressions.</span>
           </div>
         </div>
 
-        {/* Room info, connection badge & audio controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          {roomState?.roomId && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '0.4rem',
-              background: 'var(--bg-card-2)', padding: '0.35rem 0.8rem',
-              borderRadius: '20px', border: '1.5px solid var(--border-color)'
-            }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 700 }}>ROOM</span>
-              <strong style={{ fontSize: '0.95rem', letterSpacing: '2px', color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>
-                {roomState.roomId}
-              </strong>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, marginLeft: '0.15rem' }}>
+        {/* Room Info, Connection Badge & Share Link (Active Room) */}
+        {roomState?.roomId && (
+          <div className="header-room-group">
+            <div className="header-room-badge">
+              <span className="header-room-badge-label">ROOM</span>
+              <strong className="header-room-badge-code">{roomState.roomId}</strong>
+              <span className="header-room-badge-count">
                 ({roomState.players?.length || 0}/10)
               </span>
             </div>
-          )}
 
-          {/* Real-time Connection Status Indicator */}
-          {roomState?.roomId && (
+            {/* Real-time Connection Status Indicator */}
             <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                padding: '0.3rem 0.65rem',
-                borderRadius: '20px',
-                background:
-                  connStatus === 'connected'
-                    ? 'rgba(16, 185, 129, 0.12)'
-                    : connStatus === 'reconnecting'
-                      ? 'rgba(245, 158, 11, 0.15)'
-                      : 'rgba(239, 68, 68, 0.15)',
-                color:
-                  connStatus === 'connected'
-                    ? '#10b981'
-                    : connStatus === 'reconnecting'
-                      ? '#f59e0b'
-                      : '#ef4444',
-                border: `1.5px solid ${connStatus === 'connected'
-                    ? 'rgba(16, 185, 129, 0.35)'
-                    : connStatus === 'reconnecting'
-                      ? 'rgba(245, 158, 11, 0.45)'
-                      : 'rgba(239, 68, 68, 0.45)'
-                  }`
-              }}
+              className={`header-status-badge status-${connStatus}`}
               title={
                 connStatus === 'connected'
                   ? 'Real-time connection is live & synced'
                   : 'Reconnecting to game host...'
               }
             >
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background:
-                    connStatus === 'connected'
-                      ? '#10b981'
-                      : connStatus === 'reconnecting'
-                        ? '#f59e0b'
-                        : '#ef4444',
-                  boxShadow:
-                    connStatus === 'connected'
-                      ? '0 0 6px #10b981'
-                      : '0 0 6px #f59e0b',
-                  animation:
-                    connStatus !== 'connected' ? 'pulseYellow 1.5s infinite' : 'none'
-                }}
-              />
-              <span>
+              <span className={`status-dot status-${connStatus}`} />
+              <span className="status-text">
                 {connStatus === 'connected'
                   ? 'Synced'
                   : connStatus === 'reconnecting'
@@ -156,76 +84,75 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
 
               {connStatus !== 'connected' && !roomState.isHost && (
                 <button
+                  type="button"
                   onClick={handleManualReconnect}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: '0 0.2rem',
-                    color: 'inherit',
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                    fontSize: '0.68rem',
-                    fontWeight: 800
-                  }}
+                  className="status-retry-btn"
                 >
                   Retry
                 </button>
               )}
             </div>
-          )}
 
-          {roomState?.roomId && (
-            <>
-              {(!roomState.gamePhase || roomState.gamePhase === 'LOBBY') && (
-                <button
-                  className="btn btn-secondary"
-                  onClick={copyRoomLink}
-                  style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-                >
-                  {copied ? <><IconCheck size={13} /> Copied!</> : <><IconShare size={13} /> Share Link</>}
-                </button>
-              )}
+            {/* Share Link button (Lobby phase) */}
+            {(!roomState.gamePhase || roomState.gamePhase === 'LOBBY') && (
+              <button
+                type="button"
+                className="btn btn-secondary header-btn header-share-btn"
+                onClick={copyRoomLink}
+                title="Copy share link to clipboard"
+              >
+                {copied ? (
+                  <>
+                    <IconCheck size={13} />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <IconShare size={13} />
+                    <span>Share<span className="btn-label-desktop"> Link</span></span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
 
-              {onLeaveRoom && (
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={onLeaveRoom}
-                  style={{
-                    padding: '0.35rem 0.75rem',
-                    fontSize: '0.78rem',
-                    background: 'rgba(239, 68, 68, 0.12)',
-                    color: '#ef4444',
-                    border: '1.5px solid rgba(239, 68, 68, 0.35)',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.3rem'
-                  }}
-                  title="Leave this game room"
-                >
-                  <IconLogOut size={13} /> Leave
-                </button>
-              )}
-            </>
-          )}
-
+        {/* User Actions: Mic Setup, Leave, Avatar */}
+        <div className={`header-actions-group ${!roomState?.roomId ? 'no-room' : ''}`}>
           {/* Universal Mic Settings Button */}
           {onOpenSettings && (
             <button
-              className="btn btn-secondary"
+              type="button"
+              className="btn btn-secondary header-btn header-mic-btn"
               onClick={onOpenSettings}
-              style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-              title="Universal Microphone & Audio Settings"
+              title="Microphone & Audio Settings"
             >
-              <IconSettings size={13} /> Mic Setup
+              <IconSettings size={13} />
+              <span>Mic<span className="btn-label-desktop"> Setup</span></span>
             </button>
           )}
 
+          {/* Leave Button */}
+          {roomState?.roomId && onLeaveRoom && (
+            <button
+              type="button"
+              className="btn btn-danger header-btn header-leave-btn"
+              onClick={onLeaveRoom}
+              title="Leave this game room"
+            >
+              <IconLogOut size={13} />
+              <span>Leave</span>
+            </button>
+          )}
+
+          {/* Player Avatar */}
           {myPlayer && (
-            <PlayerAvatar name={myPlayer.name} avatar={myPlayer.avatar} size={34} />
+            <div className="header-avatar-wrap" title={myPlayer.name}>
+              <PlayerAvatar name={myPlayer.name} avatar={myPlayer.avatar} size={32} />
+            </div>
           )}
         </div>
+
       </div>
     </header>
   );
