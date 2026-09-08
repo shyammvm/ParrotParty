@@ -16,12 +16,18 @@ import { IconPlay, IconVolume, IconReplay, IconArrowRight, IconTrophy, IconWavef
  * 4. Option to replay recording and target demo sound as many times as desired.
  * 5. Synchronized live emoji reactions floating on screen.
  */
+const REVEAL_DISCUSSION_LIMIT = 30; // 30 seconds review timer per player
+
 export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds }) {
   const [stage, setStage] = useState('PLAYER_PLAYING'); // 'PLAYER_PLAYING' | 'SCORE_REVEALED'
   const [animatedScore, setAnimatedScore] = useState(0);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [playingAudioType, setPlayingAudioType] = useState(null); // 'recording' | 'demo' | null
   const [floatingReactions, setFloatingReactions] = useState([]); // [{ id, emoji, senderName, x, y }]
+  const [timeLeft, setTimeLeft] = useState(REVEAL_DISCUSSION_LIMIT);
+
+  const revealTimerStartMsRef = useRef(null);
+  const hasAutoAdvancedRef = useRef(false);
 
   const isHost = roomState?.isHost;
   const myPlayerId = roomState?.myPlayerId;
@@ -81,6 +87,9 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
     setAnimatedScore(0);
     setIsPlayingAudio(true);
     setPlayingAudioType('recording');
+    revealTimerStartMsRef.current = null;
+    hasAutoAdvancedRef.current = false;
+    setTimeLeft(REVEAL_DISCUSSION_LIMIT);
 
     // Auto-pause voice chat during recording playback
     voiceChatManager.setAutoMuted('REVEAL_PLAYBACK', true);
@@ -92,7 +101,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
         if (cancelled) return;
 
         // Play this player's recorded voice
-        if (playerRecording?.audioDataUrl) {
+        if (playerRecording?.audioDataUrl && !roomState?.isPaused) {
           await playAudioDataUrl(playerRecording.audioDataUrl);
         }
       } catch (err) {
@@ -111,6 +120,14 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
 
       // Reveal score + animate count-up
       setStage('SCORE_REVEALED');
+
+      // Start the 30-second review timer
+      revealTimerStartMsRef.current = Date.now();
+      if (isHost && !roomState?.revealTimerStartTime) {
+        peerManager.updateRoomState({
+          revealTimerStartTime: Date.now()
+        });
+      }
 
       let current = 0;
       const target = playerScore;
@@ -142,9 +159,66 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
     };
   }, [revealPlayerIndex, currentSoundIndex, currentPlayer?.id]);
 
+  // Stop playback if paused
+  useEffect(() => {
+    if (roomState?.isPaused) {
+      stopCurrentAudio();
+      voiceChatManager.setAutoMuted('REVEAL_PLAYBACK', false);
+      setIsPlayingAudio(false);
+      setPlayingAudioType(null);
+    }
+  }, [roomState?.isPaused]);
+
+  // 30-second countdown ticker after first playback is over
+  useEffect(() => {
+    if (stage !== 'SCORE_REVEALED') return;
+
+    if (!revealTimerStartMsRef.current) {
+      revealTimerStartMsRef.current = Date.now();
+      if (isHost && !roomState?.revealTimerStartTime) {
+        peerManager.updateRoomState({
+          revealTimerStartTime: Date.now()
+        });
+      }
+    }
+
+    const checkTimer = () => {
+      if (roomState?.isPaused) return;
+
+      const effectiveStart = roomState?.revealTimerStartTime || revealTimerStartMsRef.current || Date.now();
+      const elapsed = Math.max(0, (Date.now() - effectiveStart) / 1000);
+      const remaining = Math.max(0, Math.ceil(REVEAL_DISCUSSION_LIMIT - elapsed));
+      setTimeLeft(remaining);
+
+      if (remaining <= 0) {
+        if (isHost && !hasAutoAdvancedRef.current) {
+          hasAutoAdvancedRef.current = true;
+          triggerAutoAdvance();
+        }
+      }
+    };
+
+    checkTimer();
+    const interval = setInterval(checkTimer, 250);
+    return () => clearInterval(interval);
+  }, [stage, isHost, roomState?.revealTimerStartTime, roomState?.isPaused, revealPlayerIndex, currentSoundIndex]);
+
+  const triggerAutoAdvance = () => {
+    stopCurrentAudio();
+    voiceChatManager.setAutoMuted('REVEAL_PLAYBACK', false);
+
+    if (!isLastPlayer) {
+      handleAdvanceNextPlayer();
+    } else if (!isLastSound) {
+      onNextSound();
+    } else {
+      onFinishAllSounds();
+    }
+  };
+
   // Replay this player's voice recording
   const handleReplayRecording = async () => {
-    if (isPlayingAudio || !playerRecording?.audioDataUrl) return;
+    if (isPlayingAudio || !playerRecording?.audioDataUrl || roomState?.isPaused) return;
     setIsPlayingAudio(true);
     setPlayingAudioType('recording');
 
@@ -166,7 +240,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
   // Replay original demo prompt sound
   const handlePlayTargetDemo = async () => {
     const demoSource = currentSound?.targetAudioUrl || currentSound?.soundUrl;
-    if (isPlayingAudio || !demoSource) return;
+    if (isPlayingAudio || !demoSource || roomState?.isPaused) return;
     setIsPlayingAudio(true);
     setPlayingAudioType('demo');
 
@@ -190,15 +264,17 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
     peerManager.sendReaction(emoji);
   };
 
-  // Host advance to next player (manual, no auto-timer!)
+  // Host advance to next player
   const handleAdvanceNextPlayer = () => {
     if (!isHost) return;
+    hasAutoAdvancedRef.current = true;
     stopCurrentAudio();
     voiceChatManager.setAutoMuted('REVEAL_PLAYBACK', false);
     const nextIdx = revealPlayerIndex + 1;
     if (nextIdx < players.length) {
       peerManager.updateRoomState({
-        revealPlayerIndex: nextIdx
+        revealPlayerIndex: nextIdx,
+        revealTimerStartTime: null
       });
     }
   };
@@ -408,7 +484,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
           <button
             className="btn btn-secondary"
             onClick={handleReplayRecording}
-            disabled={isPlayingAudio || !playerRecording?.audioDataUrl}
+            disabled={isPlayingAudio || !playerRecording?.audioDataUrl || roomState?.isPaused}
             style={{ padding: '0.55rem 1.2rem', fontSize: '0.88rem' }}
           >
             {isPlayingAudio && playingAudioType === 'recording' ? (
@@ -424,7 +500,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
           <button
             className="btn btn-secondary"
             onClick={handlePlayTargetDemo}
-            disabled={isPlayingAudio || !currentSound?.targetAudioUrl}
+            disabled={isPlayingAudio || !currentSound?.targetAudioUrl || roomState?.isPaused}
             style={{ padding: '0.55rem 1.2rem', fontSize: '0.88rem' }}
           >
             {isPlayingAudio && playingAudioType === 'demo' ? (
@@ -533,7 +609,8 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
           </div>
         )}
 
-        {/* ── Host action button & non-host waiting message (NO auto-advance timer!) ── */}
+
+        {/* ── Host action button & non-host waiting message ── */}
         {stage === 'SCORE_REVEALED' && (
           <div>
             {isHost ? (
@@ -542,37 +619,64 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                   <button
                     className="btn btn-primary"
                     onClick={handleAdvanceNextPlayer}
-                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem' }}
+                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                   >
-                    Next Player ({revealPlayerIndex + 2}/{players.length}) <IconArrowRight size={18} />
+                    <span>Next Player ({revealPlayerIndex + 2}/{players.length})</span>
+                    <span style={{
+                      fontSize: '0.85rem',
+                      opacity: 0.85,
+                      background: 'rgba(0,0,0,0.2)',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '10px'
+                    }}>
+                      {timeLeft}s
+                    </span>
+                    <IconArrowRight size={18} />
                   </button>
                 ) : !isLastSound ? (
                   <button
                     className="btn btn-primary"
                     onClick={onNextSound}
-                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem' }}
+                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.05rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                   >
-                    Proceed to Next Sound ({currentSoundIndex + 2}/{totalSounds}) <IconArrowRight size={18} />
+                    <span>Proceed to Next Sound ({currentSoundIndex + 2}/{totalSounds})</span>
+                    <span style={{
+                      fontSize: '0.85rem',
+                      opacity: 0.85,
+                      background: 'rgba(0,0,0,0.2)',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '10px'
+                    }}>
+                      {timeLeft}s
+                    </span>
+                    <IconArrowRight size={18} />
                   </button>
                 ) : (
                   <button
                     className="btn btn-success"
                     onClick={onFinishAllSounds}
-                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.1rem' }}
+                    style={{ width: '100%', padding: '0.95rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                   >
-                    <IconTrophy size={20} /> View Final Leaderboard
+                    <IconTrophy size={20} />
+                    <span>View Final Leaderboard</span>
+                    <span style={{
+                      fontSize: '0.85rem',
+                      opacity: 0.85,
+                      background: 'rgba(0,0,0,0.2)',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '10px'
+                    }}>
+                      {timeLeft}s
+                    </span>
                   </button>
                 )}
-                <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                  Take your time to laugh, react, or replay! Advance when everyone is ready.
-                </span>
               </div>
             ) : (
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
                 <IconClock size={15} />
                 {!isLastPlayer
-                  ? 'Waiting for host to reveal next player...'
-                  : (!isLastSound ? 'Round finished — waiting for host to start next sound...' : 'All sounds finished — waiting for final results...')
+                  ? `Next player advancing in ${timeLeft}s (or when host clicks next)...`
+                  : (!isLastSound ? `Round finished — next sound in ${timeLeft}s...` : `All sounds finished — final results in ${timeLeft}s...`)
                 }
               </p>
             )}

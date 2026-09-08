@@ -5,7 +5,8 @@ import { voiceChatManager } from '../utils/voiceChatManager';
 import { peerManager } from '../utils/peerManager';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import WaveformDisplay from './WaveformDisplay';
-import { IconPlay, IconVolume, IconLock, IconCheck, IconHeadphones, IconMic, IconClock } from './Icons';
+import PhaseIntroOverlay from './PhaseIntroOverlay';
+import { IconPlay, IconVolume, IconLock, IconCheck, IconHeadphones, IconMic, IconClock, IconReplay } from './Icons';
 
 const LISTEN_TIME_LIMIT = 30; // 30 seconds timer limit
 
@@ -13,10 +14,14 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [timeLeft, setTimeLeft] = useState(LISTEN_TIME_LIMIT);
+  const [showIntro, setShowIntro] = useState(true);
 
   const animFrameRef = useRef(null);
   const startTimeRef = useRef(null);
   const localStartMsRef = useRef(Date.now());
+  const isPlayingRef = useRef(false);
+  const hasAutoStartedRef = useRef(false);
+  const [countdownToStart, setCountdownToStart] = useState(null);
 
   const isHost = roomState?.isHost;
   const myPlayerId = roomState?.myPlayerId;
@@ -38,21 +43,84 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
   const readyPlayersCount = players.filter(p => Boolean(listenReadyMap[p.id])).length;
   const allReady = players.length > 0 && players.every(p => Boolean(listenReadyMap[p.id]));
 
-  // Reset state on sound change
+  const playDemoSound = async () => {
+    const demoSource = currentSound?.targetAudioUrl || currentSound?.soundUrl;
+    if (!demoSource || isPlayingRef.current || isPlaybackDeactivated || roomState?.isPaused) return;
+
+    isPlayingRef.current = true;
+    setIsPlaying(true);
+    setProgress(0);
+    voiceChatManager.setAutoMuted('DEMO_PLAYBACK', true);
+
+    const audioCtx = getAudioContext();
+    if (audioCtx.state === 'suspended') {
+      try {
+        await audioCtx.resume();
+      } catch (e) { }
+    }
+
+    startTimeRef.current = audioCtx.currentTime;
+    const animateCursor = () => {
+      const elapsed = audioCtx.currentTime - startTimeRef.current;
+      const pct = Math.min(1, elapsed / duration);
+      setProgress(pct);
+      if (pct < 1 && isPlayingRef.current) {
+        animFrameRef.current = requestAnimationFrame(animateCursor);
+      }
+    };
+    animFrameRef.current = requestAnimationFrame(animateCursor);
+
+    try {
+      await playAudioDataUrl(demoSource);
+    } catch (err) {
+      console.error('Play error:', err);
+    } finally {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      setProgress(1);
+      isPlayingRef.current = false;
+      setIsPlaying(false);
+      voiceChatManager.setAutoMuted('DEMO_PLAYBACK', false);
+    }
+  };
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+    if (!isPlaybackDeactivated && !roomState?.isPaused) {
+      playDemoSound();
+    }
+  };
+
+  // Reset state on sound change & show round intro
   useEffect(() => {
     setIsPlaying(false);
+    isPlayingRef.current = false;
     setProgress(0);
     localStartMsRef.current = Date.now();
     setTimeLeft(LISTEN_TIME_LIMIT);
+    setShowIntro(true);
+    hasAutoStartedRef.current = false;
+    setCountdownToStart(null);
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     voiceChatManager.setAutoMuted('DEMO_PLAYBACK', false);
 
     return () => {
       stopCurrentAudio();
+      isPlayingRef.current = false;
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       voiceChatManager.setAutoMuted('DEMO_PLAYBACK', false);
     };
-  }, [currentSoundIndex]);
+  }, [currentSoundIndex, currentSound?.title]);
+
+  // Stop playback immediately if game is paused
+  useEffect(() => {
+    if (roomState?.isPaused) {
+      stopCurrentAudio();
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      isPlayingRef.current = false;
+      setIsPlaying(false);
+      voiceChatManager.setAutoMuted('DEMO_PLAYBACK', false);
+    }
+  }, [roomState?.isPaused]);
 
   // Mark player as ready & deactivate playback
   const handleMarkReady = () => {
@@ -61,6 +129,7 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
     // Immediately stop audio if currently playing
     stopCurrentAudio();
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    isPlayingRef.current = false;
     setIsPlaying(false);
     voiceChatManager.setAutoMuted('DEMO_PLAYBACK', false);
 
@@ -68,11 +137,20 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
     peerManager.setListenReady(true);
   };
 
-  // 30-second countdown ticker
+  // 30-second countdown ticker (freezes if paused, begins after 2.4s intro finishes)
   useEffect(() => {
     const checkTimer = () => {
-      const effectiveStart = listenPhaseStartTime || localStartMsRef.current;
-      const elapsed = Math.max(0, (Date.now() - effectiveStart) / 1000);
+      if (roomState?.isPaused) return;
+
+      const baseStart = listenPhaseStartTime || localStartMsRef.current;
+      const effectiveStart = baseStart + 1800;
+      const now = Date.now();
+      if (now < effectiveStart) {
+        setTimeLeft(LISTEN_TIME_LIMIT);
+        return;
+      }
+
+      const elapsed = Math.max(0, (now - effectiveStart) / 1000);
       const remaining = Math.max(0, Math.ceil(LISTEN_TIME_LIMIT - elapsed));
       setTimeLeft(remaining);
 
@@ -80,6 +158,7 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
         // Whichever reaches first (30s timer or ready button) deactivates playback
         stopCurrentAudio();
         if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+        isPlayingRef.current = false;
         setIsPlaying(false);
         voiceChatManager.setAutoMuted('DEMO_PLAYBACK', false);
 
@@ -93,45 +172,14 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
     checkTimer();
     const interval = setInterval(checkTimer, 250);
     return () => clearInterval(interval);
-  }, [listenPhaseStartTime, isMyPlayerReady]);
-
-  const playDemoSound = async () => {
-    const demoSource = currentSound?.targetAudioUrl || currentSound?.soundUrl;
-    if (!demoSource || isPlaying || isPlaybackDeactivated) return;
-
-    setIsPlaying(true);
-    setProgress(0);
-    voiceChatManager.setAutoMuted('DEMO_PLAYBACK', true);
-
-    const audioCtx = getAudioContext();
-    if (audioCtx.state === 'suspended') await audioCtx.resume();
-
-    startTimeRef.current = audioCtx.currentTime;
-    const animateCursor = () => {
-      const elapsed = audioCtx.currentTime - startTimeRef.current;
-      const pct = Math.min(1, elapsed / duration);
-      setProgress(pct);
-      if (pct < 1) animFrameRef.current = requestAnimationFrame(animateCursor);
-    };
-    animFrameRef.current = requestAnimationFrame(animateCursor);
-
-    try {
-      await playAudioDataUrl(demoSource);
-    } catch (err) {
-      console.error('Play error:', err);
-    } finally {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      setProgress(1);
-      setIsPlaying(false);
-      voiceChatManager.setAutoMuted('DEMO_PLAYBACK', false);
-    }
-  };
+  }, [listenPhaseStartTime, isMyPlayerReady, roomState?.isPaused]);
 
   const handleStartRecordingRound = () => {
-    if (!allReady) return;
+    hasAutoStartedRef.current = true;
 
     stopCurrentAudio();
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    isPlayingRef.current = false;
     setProgress(0);
     setIsPlaying(false);
     voiceChatManager.setAutoMuted('DEMO_PLAYBACK', false);
@@ -139,14 +187,57 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
     onStartRecordingPhase();
   };
 
-  // Timer color states
+  // Host sets 5-second countdown timestamp when all players become ready
+  useEffect(() => {
+    if (!isHost || !allReady || hasAutoStartedRef.current) return;
+
+    if (!roomState?.recordingCountdownEndTime) {
+      peerManager.updateRoomState({
+        recordingCountdownEndTime: Date.now() + 5000
+      });
+    }
+  }, [isHost, allReady, roomState?.recordingCountdownEndTime]);
+
+  // Synchronized 5-second countdown ticker for all players
+  useEffect(() => {
+    if (!allReady) {
+      setCountdownToStart(null);
+      return;
+    }
+
+    const checkCountdown = () => {
+      const endTime = roomState?.recordingCountdownEndTime;
+      const now = Date.now();
+      let remaining = 5;
+      if (endTime) {
+        remaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+      }
+      setCountdownToStart(remaining);
+
+      if (remaining <= 0 && isHost && !hasAutoStartedRef.current) {
+        hasAutoStartedRef.current = true;
+        handleStartRecordingRound();
+      }
+    };
+
+    checkCountdown();
+    const interval = setInterval(checkCountdown, 200);
+    return () => clearInterval(interval);
+  }, [allReady, roomState?.recordingCountdownEndTime, isHost]);
+
+  // Timer color states (high contrast)
   const isUrgent = timeLeft <= 5;
   const isWarning = timeLeft <= 10 && !isUrgent;
   const timerBadgeColor = isUrgent
-    ? 'var(--accent)'
+    ? '#dc2626'
     : isWarning
-      ? 'var(--warning)'
-      : 'var(--primary)';
+      ? '#b45309'
+      : '#c2410c';
+  const timerBadgeBg = isUrgent
+    ? 'rgba(239, 68, 68, 0.12)'
+    : isWarning
+      ? 'rgba(245, 158, 11, 0.12)'
+      : 'rgba(244, 132, 95, 0.12)';
 
   return (
     <div className="card" style={{ textAlign: 'center' }}>
@@ -188,10 +279,10 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
             fontSize: '1rem',
             fontWeight: 800,
             color: timerBadgeColor,
-            background: isUrgent ? 'rgba(255,107,107,0.15)' : 'rgba(255,255,255,0.06)',
-            padding: '0.15rem 0.6rem',
+            background: timerBadgeBg,
+            padding: '0.15rem 0.65rem',
             borderRadius: '12px',
-            border: `1px solid ${timerBadgeColor}`,
+            border: `1.5px solid ${timerBadgeColor}`,
             animation: isUrgent ? 'pulse 1s infinite' : 'none'
           }}>
             {timeLeft > 0 ? `${timeLeft}s` : 'Time Expired'}
@@ -201,16 +292,16 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
         {/* Visual countdown track */}
         <div style={{
           width: '100%',
-          height: '6px',
-          background: 'rgba(255,255,255,0.08)',
-          borderRadius: '3px',
+          height: '7px',
+          background: 'var(--border-color)',
+          borderRadius: '4px',
           overflow: 'hidden'
         }}>
           <div style={{
             width: `${Math.max(0, Math.min(100, (timeLeft / LISTEN_TIME_LIMIT) * 100))}%`,
             height: '100%',
             background: isUrgent
-              ? 'linear-gradient(90deg, #ff6b6b, #ff8787)'
+              ? 'linear-gradient(90deg, #dc2626, #ef4444)'
               : 'linear-gradient(90deg, var(--primary), var(--secondary))',
             transition: 'width 0.25s linear'
           }} />
@@ -260,18 +351,26 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
         flexWrap: 'wrap',
         marginBottom: '1.25rem'
       }}>
-        {/* Play button */}
+        {/* Replay Demo Sound button */}
         <button
-          className="btn btn-primary"
+          className="btn btn-secondary"
           onClick={playDemoSound}
-          disabled={isPlaying || isPlaybackDeactivated}
+          disabled={isPlaying || isPlaybackDeactivated || roomState?.isPaused}
           style={{
             padding: '0.85rem 1.8rem',
             fontSize: '1rem',
-            opacity: isPlaybackDeactivated ? 0.45 : 1,
-            cursor: isPlaybackDeactivated ? 'not-allowed' : 'pointer'
+            opacity: (isPlaybackDeactivated || roomState?.isPaused) ? 0.45 : 1,
+            cursor: (isPlaybackDeactivated || roomState?.isPaused) ? 'not-allowed' : 'pointer',
+            border: isPlaying ? '1.5px solid var(--primary)' : undefined,
+            color: isPlaying ? 'var(--primary)' : undefined
           }}
-          title={isPlaybackDeactivated ? 'Playback deactivated because ready status was set' : 'Play audio'}
+          title={
+            roomState?.isPaused
+              ? 'Game is currently paused'
+              : isPlaybackDeactivated
+                ? 'Playback deactivated because ready status was set'
+                : 'Replay'
+          }
         >
           {isPlaying ? (
             <>
@@ -283,7 +382,7 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
             </>
           ) : (
             <>
-              <IconPlay size={18} fill="currentColor" /> Play Demo Sound
+              <IconReplay size={18} /> Replay
             </>
           )}
         </button>
@@ -347,24 +446,25 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.4rem',
-                  padding: '0.3rem 0.65rem',
+                  padding: '0.35rem 0.75rem',
                   borderRadius: '20px',
-                  background: isReady ? 'rgba(74, 222, 128, 0.12)' : 'rgba(255,255,255,0.04)',
-                  border: `1.5px solid ${isReady ? 'rgba(74, 222, 128, 0.4)' : 'rgba(255,255,255,0.1)'}`,
-                  fontSize: '0.8rem'
+                  background: isReady ? 'rgba(61, 191, 123, 0.15)' : 'var(--bg-card)',
+                  border: `1.5px solid ${isReady ? '#3dbf7b' : 'var(--border-color)'}`,
+                  fontSize: '0.82rem',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
                 }}
               >
                 <PlayerAvatar name={p.name} avatar={p.avatar} size={22} />
-                <span style={{ fontWeight: 600 }}>{p.name} {isMe ? '(you)' : ''}</span>
+                <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{p.name} {isMe ? '(you)' : ''}</span>
                 <span style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.2rem',
-                  color: isReady ? '#4ade80' : 'var(--text-muted)'
+                  color: isReady ? '#166534' : 'var(--text-muted)'
                 }}>
-                  {isReady ? <IconCheck size={14} /> : <IconHeadphones size={14} />}
+                  {isReady ? <IconCheck size={14} color="#166534" /> : <IconHeadphones size={14} />}
                 </span>
               </div>
             );
@@ -372,58 +472,82 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
         </div>
       </div>
 
-      {/* ── Host & Client Action Row ── */}
-      {isHost ? (
-        <div>
-          <button
-            className={allReady ? 'btn btn-accent' : 'btn btn-secondary'}
-            onClick={handleStartRecordingRound}
-            disabled={!allReady}
-            style={{
-              width: '100%',
-              padding: '0.95rem',
-              fontSize: '1.05rem',
-              fontWeight: 800,
-              cursor: allReady ? 'pointer' : 'not-allowed',
-              opacity: allReady ? 1 : 0.65,
-              boxShadow: allReady ? '0 0 24px rgba(245, 158, 11, 0.4)' : 'none',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {allReady ? (
-              <>
-                <IconMic size={18} /> Start Recording Round (All Players Ready!)
-              </>
-            ) : (
-              <>
-                <IconClock size={18} /> Waiting for Players ({readyPlayersCount}/{players.length} Ready)
-              </>
-            )}
-          </button>
-          {!allReady && (
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: 600 }}>
-              Button will activate once all players click Ready or 30s timer finishes.
-            </p>
-          )}
+      {/* ── Host & Client Action Status Area (High Contrast) ── */}
+      {allReady ? (
+        <div style={{
+          padding: '1.1rem 1.5rem',
+          background: 'linear-gradient(135deg, #ea580c, #f97316)',
+          borderRadius: 'var(--radius-sm)',
+          border: '2px solid #c2410c',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.85rem',
+          boxShadow: '0 6px 24px rgba(234, 88, 12, 0.35)',
+          animation: 'popIn 0.3s ease-out'
+        }}>
+          <span style={{
+            fontSize: '1.4rem',
+            fontWeight: 900,
+            color: '#c2410c',
+            fontFamily: 'var(--font-display)',
+            background: '#ffffff',
+            padding: '0.25rem 0.85rem',
+            borderRadius: '14px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: '50px',
+            animation: 'pulse 1s infinite'
+          }}>
+            {countdownToStart !== null ? `${countdownToStart}s` : '5s'}
+          </span>
+          <span style={{
+            fontSize: '1.1rem',
+            fontWeight: 800,
+            color: '#ffffff',
+            textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            letterSpacing: '0.01em'
+          }}>
+            All players ready! Recording starts in {countdownToStart !== null ? `${countdownToStart}s` : '5s'}...
+          </span>
         </div>
       ) : (
         <div style={{
-          padding: '0.85rem 1.25rem',
-          background: 'var(--bg-card-2)', borderRadius: 'var(--radius-sm)',
+          padding: '0.9rem 1.3rem',
+          background: 'var(--bg-card-2)',
+          borderRadius: 'var(--radius-sm)',
           border: '1.5px solid var(--border-color)',
-          color: allReady ? 'var(--secondary)' : 'var(--text-muted)',
-          fontWeight: 700, fontSize: '0.88rem'
+          color: 'var(--text-main)',
+          fontWeight: 700,
+          fontSize: '0.92rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem'
         }}>
-          {allReady ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
-              <IconCheck size={16} color="#4ade80" /> All players ready! Waiting for host to start recording...
-            </span>
+          {isHost ? (
+            <>
+              <IconClock size={16} color="var(--primary)" />
+              <span>Waiting for players (<strong style={{ color: 'var(--primary)' }}>{readyPlayersCount} / {players.length}</strong> ready)...</span>
+            </>
           ) : (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', justifyContent: 'center' }}>
-              <IconHeadphones size={16} /> Listening &amp; practicing... ({readyPlayersCount} / {players.length} players ready)
-            </span>
+            <>
+              <IconHeadphones size={16} color="var(--secondary)" />
+              <span>Listening &amp; practicing... (<strong style={{ color: 'var(--secondary)' }}>{readyPlayersCount} / {players.length}</strong> players ready)</span>
+            </>
           )}
         </div>
+      )}
+
+      {showIntro && (
+        <PhaseIntroOverlay
+          type="ROUND_START"
+          roundNumber={currentSoundIndex + 1}
+          durationMs={1800}
+          onComplete={handleIntroComplete}
+        />
       )}
     </div>
   );

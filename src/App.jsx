@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import VoiceChatBar from './components/VoiceChatBar';
 import AudioSettingsModal from './components/AudioSettingsModal';
@@ -10,6 +10,8 @@ import SoundReveal from './components/SoundReveal';
 import Leaderboard from './components/Leaderboard';
 import { peerManager } from './utils/peerManager';
 import { voiceChatManager } from './utils/voiceChatManager';
+import { stopCurrentAudio } from './utils/audioPlayer';
+import { IconPause, IconPlay } from './components/Icons';
 
 /**
  * Game Phase Flow (per sound in pack):
@@ -123,23 +125,37 @@ export default function App() {
       soundPack: soundPackItems,
       currentSoundIndex: 0,
       revealPlayerIndex: 0,
+      revealTimerStartTime: null,
+      recordingCountdownEndTime: null,
+      isPaused: false,
+      pausedAt: null,
       listenReadyMap: {},
       listenPhaseStartTime: Date.now(),
       players: resetPlayers
     });
   };
 
-  const handleStartRecordingPhase = () => {
-    peerManager.updateRoomState({ gamePhase: 'RECORDING' });
-  };
+  const handleStartRecordingPhase = useCallback(() => {
+    peerManager.updateRoomState({
+      gamePhase: 'RECORDING',
+      recordPhaseStartTime: Date.now(),
+      recordingCountdownEndTime: null,
+      isPaused: false,
+      pausedAt: null
+    });
+  }, []);
 
   // All players finished recording sound N → jump to SOUND_REVEAL for that sound
-  const handleSoundComplete = () => {
+  const handleSoundComplete = useCallback(() => {
     peerManager.updateRoomState({
       gamePhase: 'SOUND_REVEAL',
-      revealPlayerIndex: 0
+      revealPlayerIndex: 0,
+      revealTimerStartTime: null,
+      recordPhaseStartTime: null,
+      isPaused: false,
+      pausedAt: null
     });
-  };
+  }, []);
 
   // SoundReveal finished showing all players for sound N → go to next sound's LISTEN
   const handleNextSound = () => {
@@ -148,6 +164,10 @@ export default function App() {
       gamePhase: 'LISTEN',
       currentSoundIndex: nextSoundIdx,
       revealPlayerIndex: 0,
+      revealTimerStartTime: null,
+      recordingCountdownEndTime: null,
+      isPaused: false,
+      pausedAt: null,
       listenReadyMap: {},
       listenPhaseStartTime: Date.now()
     });
@@ -172,12 +192,57 @@ export default function App() {
 
     peerManager.updateRoomState({
       gamePhase: 'LEADERBOARD',
+      revealTimerStartTime: null,
+      isPaused: false,
+      pausedAt: null,
       players: finalizedPlayers
     });
   };
 
+  const handleTogglePause = () => {
+    if (!roomState?.isHost) return;
+
+    if (!roomState.isPaused) {
+      // Pause
+      stopCurrentAudio();
+      peerManager.updateRoomState({
+        isPaused: true,
+        pausedAt: Date.now()
+      });
+    } else {
+      // Resume: offset timers by pause duration
+      const pausedAt = roomState.pausedAt || Date.now();
+      const pauseDuration = Math.max(0, Date.now() - pausedAt);
+
+      const updates = {
+        isPaused: false,
+        pausedAt: null
+      };
+
+      if (roomState.listenPhaseStartTime) {
+        updates.listenPhaseStartTime = roomState.listenPhaseStartTime + pauseDuration;
+      }
+
+      if (roomState.recordPhaseStartTime) {
+        updates.recordPhaseStartTime = roomState.recordPhaseStartTime + pauseDuration;
+      }
+
+      if (roomState.revealTimerStartTime) {
+        updates.revealTimerStartTime = roomState.revealTimerStartTime + pauseDuration;
+      }
+
+      peerManager.updateRoomState(updates);
+    }
+  };
+
   const handlePlayAgainNextRound = () => {
-    peerManager.updateRoomState({ gamePhase: 'PROMPT_SELECT' });
+    peerManager.updateRoomState({
+      gamePhase: 'PROMPT_SELECT',
+      revealTimerStartTime: null,
+      recordPhaseStartTime: null,
+      isPaused: false,
+      pausedAt: null
+    });
   };
 
   const handleLeaveRoom = () => {
@@ -206,6 +271,7 @@ export default function App() {
         myPlayerId={roomState?.myPlayerId}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onLeaveRoom={handleLeaveRoom}
+        onTogglePause={handleTogglePause}
       />
 
       {roomState?.roomId && (
@@ -215,7 +281,11 @@ export default function App() {
         />
       )}
 
-      <main style={{ width: '100%' }}>
+      <main
+        key={`${gamePhase}-${roomState?.currentSoundIndex || 0}`}
+        className="phase-view-transition"
+        style={{ width: '100%' }}
+      >
         {gamePhase === 'LOBBY' && (
           <Lobby
             roomState={roomState}
@@ -258,6 +328,96 @@ export default function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
       />
+
+      {/* ── Synchronized Game Paused Overlay ── */}
+      {roomState?.isPaused && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 23, 42, 0.78)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          zIndex: 9000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem',
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div className="card" style={{
+            maxWidth: 440,
+            width: '100%',
+            textAlign: 'center',
+            padding: '2.2rem 1.8rem',
+            border: '2px solid var(--warning)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 35px rgba(245, 158, 11, 0.25)'
+          }}>
+            <div style={{
+              width: 64,
+              height: 64,
+              borderRadius: '50%',
+              background: 'rgba(245, 158, 11, 0.15)',
+              color: 'var(--warning)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '1.1rem',
+              boxShadow: '0 0 20px rgba(245, 158, 11, 0.3)'
+            }}>
+              <IconPause size={32} />
+            </div>
+
+            <h2 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.8rem',
+              fontWeight: 800,
+              marginBottom: '0.6rem',
+              color: '#fff'
+            }}>
+              Game Paused
+            </h2>
+
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.94rem', lineHeight: 1.55, marginBottom: '1.5rem' }}>
+              {roomState.isHost
+                ? 'You have paused the game. Timers and audio are frozen. Voice chat remains LIVE so you can discuss with everyone!'
+                : `${roomState.players?.find(p => p.isHost)?.name || 'The host'} has paused the game. Voice chat is active — feel free to talk!`
+              }
+            </p>
+
+            {roomState.isHost ? (
+              <button
+                className="btn btn-primary"
+                onClick={handleTogglePause}
+                style={{
+                  width: '100%',
+                  padding: '0.95rem',
+                  fontSize: '1.05rem',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 0 24px rgba(244, 132, 95, 0.4)'
+                }}
+              >
+                <IconPlay size={18} fill="currentColor" /> Resume Game
+              </button>
+            ) : (
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.88rem',
+                color: 'var(--warning)',
+                fontWeight: 700
+              }}>
+                <span className="status-dot status-connected" style={{ background: 'var(--warning)' }} />
+                Waiting for host to resume...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

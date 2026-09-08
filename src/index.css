@@ -963,6 +963,235 @@ body {
   margin-top: 1rem;
 }
 
+/* ── Smooth Page Transition ────────────────────────────────────────────────── */
+.phase-view-transition {
+  animation: phaseViewFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 
+@keyframes phaseViewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 
+/* ── Phase Intro Overlay & Animations ──────────────────────────────────────── */
+.phase-intro-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  cursor: pointer;
+}
 
+.phase-intro-enter {
+  animation: fadeInModal 0.2s ease-out forwards;
+}
+
+.phase-intro-exit {
+  animation: fadeOutModal 0.22s ease-in forwards;
+}
+
+@keyframes fadeOutModal {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.phase-intro-card {
+  background: #1c182a;
+  border: 2px solid rgba(244, 132, 95, 0.45);
+  border-radius: 24px;
+  padding: 2.2rem 2rem 1.8rem;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.65), 0 0 45px rgba(244, 132, 95, 0.22);
+  cursor: default;
+  overflow: hidden;
+}
+
+.card-pop-in {
+  animation: introPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards;
+}
+
+.card-pop-out {
+  animation: introPopOut 0.2s ease-in forwards;
+}
+
+@keyframes introPopIn {
+  0% {
+    transform: scale(0.75) translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes introPopOut {
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.85) translateY(-15px);
+    opacity: 0;
+  }
+}
+
+.phase-intro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.95rem;
+  background: rgba(244, 132, 95, 0.18);
+  border: 1.5px solid rgba(244, 132, 95, 0.45);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+  margin-bottom: 0.85rem;
+}
+
+.phase-intro-icon-wrap {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.2rem auto 1.1rem;
+  position: relative;
+  box-shadow: 0 0 35px rgba(244, 132, 95, 0.3);
+}
+
+.phase-intro-icon-wrap.icon-listen {
+  background: linear-gradient(135deg, rgba(108, 99, 255, 0.3), rgba(244, 132, 95, 0.35));
+  border: 2.5px solid rgba(244, 132, 95, 0.6);
+  color: #fff;
+}
+
+.phase-intro-icon-wrap.icon-record {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.35), rgba(245, 158, 11, 0.3));
+  border: 2.5px solid rgba(244, 63, 94, 0.7);
+  color: #fff;
+  box-shadow: 0 0 35px rgba(244, 63, 94, 0.35);
+}
+
+.phase-intro-halo {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px dashed rgba(244, 132, 95, 0.45);
+  animation: spinHalo 7s linear infinite;
+}
+
+.phase-intro-halo.halo-2 {
+  inset: -16px;
+  border: 1.5px dotted rgba(245, 158, 11, 0.35);
+  animation: spinHaloReverse 10s linear infinite;
+}
+
+@keyframes spinHalo {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes spinHaloReverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
+.phase-intro-title {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.7rem;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.phase-intro-banner {
+  padding: 0.65rem 1.15rem;
+  border-radius: 12px;
+  margin-bottom: 1.1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-listen {
+  background: rgba(108, 99, 255, 0.18);
+  color: #ddd6fe;
+  border: 1.5px solid rgba(108, 99, 255, 0.4);
+}
+
+.banner-record {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fecdd3;
+  border: 1.5px solid rgba(244, 63, 94, 0.5);
+}
+
+.phase-intro-sound-tag {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.65rem 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.phase-intro-action-btn {
+  width: 100%;
+  padding: 0.92rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 0 24px rgba(244, 132, 95, 0.35);
+}
+
+.phase-intro-timer-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.phase-intro-timer-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent), var(--secondary));
+  width: 0%;
+  animation-name: introFill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes introFill {
+  from { width: 0%; }
+  to   { width: 100%; }
+}

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import { peerManager } from '../utils/peerManager';
 import parrotLogo from '../assets/parrot-party.png';
-import { IconShare, IconCheck, IconLogOut, IconSettings } from './Icons';
+import { IconShare, IconCheck, IconLogOut, IconSettings, IconPause, IconPlay } from './Icons';
 
-export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveRoom }) {
+export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveRoom, onTogglePause }) {
   const [copied, setCopied] = useState(false);
   const [connStatus, setConnStatus] = useState(() => peerManager.getConnectionStatus());
 
@@ -32,6 +32,7 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
   };
 
   const myPlayer = roomState?.players?.find(p => p.id === myPlayerId);
+  const isGameActive = roomState?.gamePhase && !['LOBBY', 'LEADERBOARD', 'PROMPT_SELECT'].includes(roomState.gamePhase);
 
   return (
     <header className="card app-header">
@@ -117,8 +118,34 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
           </div>
         )}
 
-        {/* User Actions: Mic Setup, Leave, Avatar */}
+        {/* User Actions: Mic Setup, Pause, Leave, Avatar */}
         <div className={`header-actions-group ${!roomState?.roomId ? 'no-room' : ''}`}>
+          {/* Host Pause / Resume Button */}
+          {roomState?.isHost && isGameActive && onTogglePause && (
+            <button
+              type="button"
+              className={`btn ${roomState.isPaused ? 'btn-accent' : 'btn-secondary'} header-btn`}
+              onClick={onTogglePause}
+              title={roomState.isPaused ? 'Resume Game' : 'Pause Game'}
+              style={{
+                borderColor: roomState.isPaused ? 'var(--warning)' : undefined,
+                boxShadow: roomState.isPaused ? '0 0 12px rgba(245, 158, 11, 0.4)' : undefined
+              }}
+            >
+              {roomState.isPaused ? (
+                <>
+                  <IconPlay size={13} fill="currentColor" />
+                  <span>Resume</span>
+                </>
+              ) : (
+                <>
+                  <IconPause size={13} />
+                  <span>Pause</span>
+                </>
+              )}
+            </button>
+          )}
+
           {/* Universal Mic Settings Button */}
           {onOpenSettings && (
             <button
