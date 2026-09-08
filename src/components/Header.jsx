@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PlayerAvatar } from '../utils/avatarUtils';
+import tintomLogo from '../assets/tintom.png';
 
 export default function Header({ roomState, myPlayerId, onOpenSettings }) {
   const [copied, setCopied] = useState(false);
@@ -21,13 +22,17 @@ export default function Header({ roomState, myPlayerId, onOpenSettings }) {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <img
-            src="/images/tintom.png"
+            src={tintomLogo}
             alt="TinTom Simulator Logo"
+            onError={(e) => {
+              e.currentTarget.src = `${import.meta.env.BASE_URL}images/tintom.png`;
+            }}
             style={{
               width: 44,
               height: 44,
               borderRadius: 12,
               objectFit: 'cover',
+              objectPosition: 'top center',
               boxShadow: '0 3px 10px rgba(244,132,95,0.35)',
               border: '2px solid rgba(255, 255, 255, 0.8)',
               flexShrink: 0

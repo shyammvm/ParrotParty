@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { peerManager } from '../utils/peerManager';
 import { PlayerAvatar } from '../utils/avatarUtils';
+import tintomLogo from '../assets/tintom.png';
 
 export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings }) {
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('tintom_player_name') || '');
@@ -130,13 +131,17 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings }
     <div className="card">
       <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
         <img
-          src="/images/tintom.png"
+          src={tintomLogo}
           alt="TinTom Simulator"
+          onError={(e) => {
+            e.currentTarget.src = `${import.meta.env.BASE_URL}images/tintom.png`;
+          }}
           style={{
             width: 76,
             height: 76,
             borderRadius: 20,
             objectFit: 'cover',
+            objectPosition: 'top center',
             boxShadow: '0 8px 24px rgba(244, 132, 95, 0.28)',
             border: '3px solid rgba(255, 255, 255, 0.9)',
             marginBottom: '0.6rem'
