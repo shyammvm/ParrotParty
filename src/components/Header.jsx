@@ -3,7 +3,7 @@ import { PlayerAvatar } from '../utils/avatarUtils';
 import { peerManager } from '../utils/peerManager';
 import tintomLogo from '../assets/tintom.png';
 
-export default function Header({ roomState, myPlayerId, onOpenSettings }) {
+export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveRoom }) {
   const [copied, setCopied] = useState(false);
   const [connStatus, setConnStatus] = useState(() => peerManager.getConnectionStatus());
 
@@ -175,13 +175,34 @@ export default function Header({ roomState, myPlayerId, onOpenSettings }) {
           )}
 
           {roomState?.roomId && (
-            <button
-              className="btn btn-secondary"
-              onClick={copyRoomLink}
-              style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem' }}
-            >
-              {copied ? 'Copied!' : 'Share Link'}
-            </button>
+            <>
+              <button
+                className="btn btn-secondary"
+                onClick={copyRoomLink}
+                style={{ padding: '0.35rem 0.8rem', fontSize: '0.8rem' }}
+              >
+                {copied ? 'Copied!' : 'Share Link'}
+              </button>
+
+              {onLeaveRoom && (
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={onLeaveRoom}
+                  style={{
+                    padding: '0.35rem 0.75rem',
+                    fontSize: '0.78rem',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    color: '#ef4444',
+                    border: '1.5px solid rgba(239, 68, 68, 0.35)',
+                    cursor: 'pointer'
+                  }}
+                  title="Leave this game room"
+                >
+                  🚪 Leave
+                </button>
+              )}
+            </>
           )}
 
           {/* Universal Mic Settings Button */}

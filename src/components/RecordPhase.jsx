@@ -59,8 +59,11 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
     voiceChatManager.setAutoMuted('RECORDING', false);
   }, [currentSoundIndex]);
 
+  const isMountedRef = useRef(true);
+
   // Universal mic subscription
   useEffect(() => {
+    isMountedRef.current = true;
     const unsub = audioDeviceManager.subscribe((devId, devs) => {
       setSelectedDeviceId(devId);
       if (devs && devs.length) setDevices(devs);
@@ -69,7 +72,10 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
       setDevices(devs);
       setSelectedDeviceId(audioDeviceManager.getSelectedDeviceId());
     });
-    return () => unsub();
+    return () => {
+      isMountedRef.current = false;
+      unsub();
+    };
   }, []);
 
   const stopStream = (streamRef, animRef) => {
@@ -78,6 +84,7 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
   };
 
   useEffect(() => () => {
+    isMountedRef.current = false;
     stopStream(micStreamRef, animFrameRef);
     stopStream(testStreamRef, testAnimRef);
     voiceChatManager.setAutoMuted('RECORDING', false);
@@ -185,11 +192,21 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
     await new Promise(resolve => {
       let c = 3;
       const tick = setInterval(() => {
+        if (!isMountedRef.current) {
+          clearInterval(tick);
+          resolve();
+          return;
+        }
         c--;
         if (c > 0) setCountdown(c);
         else { clearInterval(tick); resolve(); }
       }, 1000);
     });
+
+    if (!isMountedRef.current) {
+      voiceChatManager.setAutoMuted('RECORDING', false);
+      return;
+    }
 
     let analyser;
     try {
@@ -202,9 +219,19 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
     }
 
     chunksRef.current = [];
-    const recorder = new MediaRecorder(micStreamRef.current);
-    mediaRecorderRef.current = recorder;
-    recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+    let recorder;
+    try {
+      recorder = new MediaRecorder(micStreamRef.current);
+      mediaRecorderRef.current = recorder;
+      recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+    } catch (recErr) {
+      console.error('[Record] MediaRecorder initialization error:', recErr);
+      alert('Failed to initialize audio recorder: ' + recErr.message);
+      stopStream(micStreamRef, animFrameRef);
+      voiceChatManager.setAutoMuted('RECORDING', false);
+      setPhase('IDLE');
+      return;
+    }
 
     recorder.onstop = async () => {
       stopStream(micStreamRef, animFrameRef);

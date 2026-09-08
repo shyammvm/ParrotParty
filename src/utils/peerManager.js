@@ -15,6 +15,13 @@
 import Peer from 'peerjs';
 import { getInitials } from './avatarUtils';
 import { SOUND_PACKS } from './soundLibrary';
+import { roomDirectory } from './roomDirectory';
+
+export function getHostPeerId(roomCode) {
+  if (!roomCode) return '';
+  const sanitized = roomCode.toString().replace(/[^0-9]/g, '').slice(0, 4);
+  return `TINTOM-${sanitized || roomCode.toString().trim()}`;
+}
 
 export function blobToDataURL(blob) {
   return new Promise((resolve, reject) => {
@@ -108,7 +115,7 @@ export class RoomPeerManager {
   }
 
   getMyPeerId() {
-    return this.isHost ? this.roomId : this.playerId;
+    return this.isHost ? getHostPeerId(this.roomId) : this.playerId;
   }
 
   getConnectionStatus() {
@@ -345,8 +352,9 @@ export class RoomPeerManager {
         try { this.peer.reconnect(); } catch (e) {}
       }
 
-      console.log(`[peerManager] Attempting to reconnect to host ${this.roomId}... (Attempt ${this.reconnectAttempts + 1})`);
-      const conn = this.peer.connect(this.roomId, {
+      const hostPeerId = getHostPeerId(this.roomId);
+      console.log(`[peerManager] Attempting to reconnect to host ${hostPeerId}... (Attempt ${this.reconnectAttempts + 1})`);
+      const conn = this.peer.connect(hostPeerId, {
         reliable: true
       });
 
@@ -446,12 +454,13 @@ export class RoomPeerManager {
     return new Promise((resolve) => {
       this.isHost = true;
       const code = Math.floor(1000 + Math.random() * 9000).toString();
-      this.roomId = `MIMIC-${code}`;
+      this.roomId = code; // 4-digit room code
+      const hostPeerId = getHostPeerId(this.roomId);
       this.playerId = `player-host-${Date.now()}`;
 
       const initialPlayer = {
         id: this.playerId,
-        peerId: this.roomId,
+        peerId: hostPeerId,
         name: hostPlayerName,
         avatar: hostAvatar || getInitials(hostPlayerName),
         isHost: true,
@@ -477,8 +486,32 @@ export class RoomPeerManager {
 
       this.setupBroadcastChannel();
 
+      // Save session for rejoining
       try {
-        this.peer = new Peer(this.roomId, {
+        localStorage.setItem(
+          'tintom_last_room',
+          JSON.stringify({
+            roomId: this.roomId,
+            playerName: hostPlayerName,
+            playerId: this.playerId,
+            avatar: initialPlayer.avatar,
+            isHost: true,
+            timestamp: Date.now()
+          })
+        );
+      } catch (e) {}
+
+      // Start active room directory advertising
+      roomDirectory.startAdvertising({
+        roomCode: this.roomId,
+        hostName: hostPlayerName,
+        playerCount: 1,
+        maxPlayers: MAX_ROOM_PLAYERS,
+        gamePhase: 'LOBBY'
+      });
+
+      try {
+        this.peer = new Peer(hostPeerId, {
           debug: 1,
           config: { iceServers: ICE_SERVERS }
         });
@@ -511,11 +544,13 @@ export class RoomPeerManager {
     });
   }
 
-  joinRoom(roomId, playerName, playerAvatar) {
+  joinRoom(roomId, playerName, playerAvatar, existingPlayerId = null, isRejoin = false) {
     return new Promise((resolve, reject) => {
       this.isHost = false;
-      this.roomId = roomId.toUpperCase().trim();
-      this.playerId = `player-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const sanitized = roomId.toString().replace(/[^0-9]/g, '').slice(0, 4);
+      this.roomId = sanitized || roomId.toString().trim();
+      const hostPeerId = getHostPeerId(this.roomId);
+      this.playerId = existingPlayerId || `player-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
       let settled = false;
       const finishResolve = () => {
@@ -525,6 +560,22 @@ export class RoomPeerManager {
           this.pendingJoinReject = null;
           this.setConnectionStatus('connected');
           this.startClientWatchdog();
+
+          // Save session for rejoining
+          try {
+            localStorage.setItem(
+              'tintom_last_room',
+              JSON.stringify({
+                roomId: this.roomId,
+                playerName,
+                playerId: this.playerId,
+                avatar: playerAvatar || getInitials(playerName),
+                isHost: false,
+                timestamp: Date.now()
+              })
+            );
+          } catch (e) {}
+
           resolve(true);
         }
       };
@@ -554,8 +605,10 @@ export class RoomPeerManager {
 
       this.setupBroadcastChannel();
 
+      const joinMsgType = isRejoin ? 'REJOIN_ROOM' : 'JOIN_ROOM';
+
       this.broadcastChannel.postMessage({
-        type: 'JOIN_ROOM',
+        type: joinMsgType,
         roomId: this.roomId,
         player: newPlayer
       });
@@ -569,14 +622,15 @@ export class RoomPeerManager {
         this.bindPeerSignalingEvents(this.peer);
 
         this.peer.on('open', () => {
-          const conn = this.peer.connect(this.roomId, { reliable: true });
+          const conn = this.peer.connect(hostPeerId, { reliable: true });
           this.hostConnection = conn;
 
           conn.on('open', () => {
             this.setConnectionStatus('connected');
             this.lastHeartbeatReceivedAt = Date.now();
             this.sendOverConn(conn, {
-              type: 'JOIN_ROOM',
+              type: joinMsgType,
+              roomId: this.roomId,
               player: newPlayer
             });
           });
@@ -610,9 +664,13 @@ export class RoomPeerManager {
     });
   }
 
+  rejoinRoom(roomId, playerName, existingPlayerId, playerAvatar) {
+    return this.joinRoom(roomId, playerName, playerAvatar, existingPlayerId, true);
+  }
+
   setupBroadcastChannel() {
     if (this.broadcastChannel) this.broadcastChannel.close();
-    this.broadcastChannel = new BroadcastChannel(`MIMIC_ROOM_${this.roomId}`);
+    this.broadcastChannel = new BroadcastChannel(`TINTOM_ROOM_${this.roomId}`);
     this.broadcastChannel.onmessage = (event) => {
       this.handleReceivedMessage(event.data);
     };
@@ -674,6 +732,30 @@ export class RoomPeerManager {
     }
 
     if (this.isHost) {
+      if (msg.type === 'LEAVE_ROOM') {
+        if (this.roomState && this.roomState.players) {
+          this.roomState.players = this.roomState.players.filter((p) => p.id !== msg.playerId);
+          const conn = this.connections.get(msg.playerId);
+          if (conn) {
+            try { conn.close(); } catch (e) {}
+            this.connections.delete(msg.playerId);
+          }
+
+          // "If everyone leaves delete the room"
+          if (this.roomState.players.length === 0) {
+            roomDirectory.stopAdvertising();
+            roomDirectory.deleteRoomByCode(this.roomId);
+            this.destroy();
+            this.roomState = null;
+            this.roomId = null;
+            if (this.onStateChangeCallback) this.onStateChangeCallback(null);
+            return;
+          }
+
+          this.broadcastState();
+        }
+        return;
+      }
       if (msg.type === 'REQUEST_STATE') {
         // Send state back to the requesting client
         this.broadcastState();
@@ -755,6 +837,14 @@ export class RoomPeerManager {
       }
     } else {
       // ── Client Handlers ──
+      if (msg.type === 'ROOM_DELETED') {
+        if (this.onErrorCallback) {
+          this.onErrorCallback('The room has been closed or deleted.');
+        }
+        this.leaveRoom(false);
+        return;
+      }
+
       if ((msg.type === 'ROOM_FULL' || msg.type === 'JOIN_ERROR') && msg.targetPlayerId === this.playerId) {
         const errMsg = msg.error || `Room is full! Maximum ${MAX_ROOM_PLAYERS} players allowed.`;
         if (this.pendingJoinReject) {
@@ -870,6 +960,12 @@ export class RoomPeerManager {
       this.broadcastChannel.postMessage(msg);
     }
 
+    // Update active room directory pulse
+    roomDirectory.updateAdvertising({
+      playerCount: this.roomState.players.length,
+      gamePhase: this.roomState.gamePhase
+    });
+
     this.emitState();
   }
 
@@ -883,7 +979,63 @@ export class RoomPeerManager {
     }
   }
 
+  leaveRoom(notify = true) {
+    if (!this.roomId) return;
+    const wasHost = this.isHost;
+    const roomCode = this.roomId;
+    const myPlayerId = this.playerId;
+
+    if (notify) {
+      if (wasHost) {
+        const remaining = this.roomState?.players?.filter((p) => p.id !== myPlayerId) || [];
+        if (remaining.length === 0) {
+          // Sole host leaving: delete room from directory
+          roomDirectory.stopAdvertising();
+          roomDirectory.deleteRoomByCode(roomCode);
+        } else {
+          // Close room & notify other players that room is deleted
+          const deleteMsg = { type: 'ROOM_DELETED', roomId: roomCode };
+          this.connections.forEach((conn) => this.sendOverConn(conn, deleteMsg));
+          if (this.broadcastChannel) this.broadcastChannel.postMessage(deleteMsg);
+          roomDirectory.stopAdvertising();
+          roomDirectory.deleteRoomByCode(roomCode);
+        }
+      } else {
+        // Client leaving
+        const leaveMsg = { type: 'LEAVE_ROOM', roomId: roomCode, playerId: myPlayerId };
+        if (this.hostConnection && this.hostConnection.open) {
+          this.sendOverConn(this.hostConnection, leaveMsg);
+        }
+        if (this.broadcastChannel) {
+          this.broadcastChannel.postMessage(leaveMsg);
+        }
+      }
+    }
+
+    // Clear saved last room on explicit leave
+    try {
+      const saved = localStorage.getItem('tintom_last_room');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.roomId === roomCode) {
+          localStorage.removeItem('tintom_last_room');
+        }
+      }
+    } catch (e) {}
+
+    this.destroy();
+    this.roomState = null;
+    this.roomId = null;
+    this.playerId = null;
+    this.myPlayerInfo = null;
+    this.isHost = false;
+    if (this.onStateChangeCallback) {
+      this.onStateChangeCallback(null);
+    }
+  }
+
   destroy() {
+    roomDirectory.stopAdvertising();
     this.stopHostHeartbeat();
     this.stopClientWatchdog();
     if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);

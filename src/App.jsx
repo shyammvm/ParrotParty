@@ -40,7 +40,25 @@ export default function App() {
         roomState.players || []
       );
     }
-  }, [roomState?.roomId, peerManager.getMyPeerId()]);
+  }, [roomState?.roomId, peerManager.getMyPeerId(), roomState?.myPlayerId]);
+
+  // Re-bind voice chat if peer connection reconnects/recovers
+  useEffect(() => {
+    const unsub = peerManager.onConnectionStatus((status) => {
+      if (status === 'connected' && roomState?.roomId) {
+        const peer = peerManager.getPeer();
+        if (peer) {
+          voiceChatManager.startVoiceChat(
+            peer,
+            peerManager.getMyPeerId(),
+            roomState.myPlayerId,
+            roomState.players || []
+          );
+        }
+      }
+    });
+    return () => unsub();
+  }, [roomState?.roomId, roomState?.myPlayerId]);
 
   // Sync new players into the voice chat mesh
   useEffect(() => {
@@ -48,6 +66,13 @@ export default function App() {
       voiceChatManager.syncRoomPlayers(roomState.players);
     }
   }, [roomState?.players]);
+
+  // Clear any stuck auto-mutes whenever game phase or sound transitions
+  useEffect(() => {
+    if (roomState?.gamePhase) {
+      voiceChatManager.clearAllAutoMutes();
+    }
+  }, [roomState?.gamePhase, roomState?.currentSoundIndex]);
 
   // Avoid accidental refresh & warn on refresh when in a room or active game
   useEffect(() => {
@@ -133,6 +158,23 @@ export default function App() {
     peerManager.updateRoomState({ gamePhase: 'PROMPT_SELECT' });
   };
 
+  const handleLeaveRoom = () => {
+    if (!roomState?.roomId) return;
+    const isGameActive = roomState.gamePhase && roomState.gamePhase !== 'LOBBY';
+    const confirmText = isGameActive
+      ? `Are you sure you want to leave room ${roomState.roomId}?\nThe game is currently in progress!`
+      : `Are you sure you want to leave room ${roomState.roomId}?`;
+
+    if (window.confirm(confirmText)) {
+      voiceChatManager.leaveVoiceChat();
+      peerManager.leaveRoom(true);
+      setRoomState(null);
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  };
+
   const gamePhase = roomState?.gamePhase || 'LOBBY';
 
   return (
@@ -141,6 +183,7 @@ export default function App() {
         roomState={roomState}
         myPlayerId={roomState?.myPlayerId}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onLeaveRoom={handleLeaveRoom}
       />
 
       {roomState?.roomId && (
@@ -156,6 +199,7 @@ export default function App() {
             roomState={roomState}
             onStartSelectPrompt={handleHostStartPromptSelect}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onLeaveRoom={handleLeaveRoom}
           />
         )}
 

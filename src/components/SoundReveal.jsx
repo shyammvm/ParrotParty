@@ -85,20 +85,25 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
     voiceChatManager.setAutoMuted('REVEAL_PLAYBACK', true);
 
     const run = async () => {
-      // Brief pause before playback for smooth visual transition
-      await new Promise(r => setTimeout(r, 250));
-      if (cancelled) return;
+      try {
+        // Brief pause before playback for smooth visual transition
+        await new Promise(r => setTimeout(r, 250));
+        if (cancelled) return;
 
-      // Play this player's recorded voice
-      if (playerRecording?.audioDataUrl) {
-        await playAudioDataUrl(playerRecording.audioDataUrl);
+        // Play this player's recorded voice
+        if (playerRecording?.audioDataUrl) {
+          await playAudioDataUrl(playerRecording.audioDataUrl);
+        }
+      } catch (err) {
+        console.warn('[SoundReveal] Playback error:', err);
+      } finally {
+        // Immediately unpause voice chat once audio playback ends so players can react!
+        voiceChatManager.setAutoMuted('REVEAL_PLAYBACK', false);
+        setIsPlayingAudio(false);
+        setPlayingAudioType(null);
       }
-      if (cancelled) return;
 
-      // Immediately unpause voice chat once audio playback ends so players can react!
-      voiceChatManager.setAutoMuted('REVEAL_PLAYBACK', false);
-      setIsPlayingAudio(false);
-      setPlayingAudioType(null);
+      if (cancelled) return;
 
       await new Promise(r => setTimeout(r, 200));
       if (cancelled) return;

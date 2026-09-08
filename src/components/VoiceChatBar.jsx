@@ -106,9 +106,27 @@ export default function VoiceChatBar({ roomState, onOpenSettings }) {
             </span>
           </div>
           {isAutoMuted && (
-            <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-              Resumes immediately once audio finishes!
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                Resumes immediately once audio finishes!
+              </span>
+              <button
+                onClick={() => voiceChatManager.clearAllAutoMutes()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--danger)',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+                title="Force unpause voice chat"
+              >
+                Force Resume
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -206,6 +224,29 @@ export default function VoiceChatBar({ roomState, onOpenSettings }) {
           <span>{effectiveDeafened ? '🔕' : '🎧'}</span>
           <span>{effectiveDeafened ? 'Undeafen' : 'Deafen'}</span>
         </button>
+
+        {/* Reconnect Mesh button if players exist but no active audio connection */}
+        {players.length > 1 && voiceState.connectedPeersCount === 0 && (
+          <button
+            className="btn"
+            onClick={() => voiceChatManager.refreshMesh()}
+            style={{
+              padding: '0.35rem 0.65rem',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              background: 'rgba(245, 158, 11, 0.15)',
+              color: '#f59e0b',
+              border: '1.5px solid rgba(245, 158, 11, 0.4)',
+              borderRadius: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}
+            title="Retry voice chat connection"
+          >
+            🔄 Reconnect
+          </button>
+        )}
 
         {/* Settings button */}
         <button
