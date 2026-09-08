@@ -1,9 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlayerAvatar } from '../utils/avatarUtils';
+import { peerManager } from '../utils/peerManager';
 import tintomLogo from '../assets/tintom.png';
 
 export default function Header({ roomState, myPlayerId, onOpenSettings }) {
   const [copied, setCopied] = useState(false);
+  const [connStatus, setConnStatus] = useState(() => peerManager.getConnectionStatus());
+
+  useEffect(() => {
+    const unsub = peerManager.onConnectionStatus((status) => {
+      setConnStatus(status);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleManualReconnect = () => {
+    if (!roomState?.isHost) {
+      peerManager.reconnectToHost();
+    } else {
+      peerManager.broadcastState();
+    }
+  };
 
   const copyRoomLink = () => {
     if (!roomState?.roomId) return;
@@ -55,7 +72,7 @@ export default function Header({ roomState, myPlayerId, onOpenSettings }) {
           </div>
         </div>
 
-        {/* Room info & audio controls */}
+        {/* Room info, connection badge & audio controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           {roomState?.roomId && (
             <div style={{
@@ -70,6 +87,90 @@ export default function Header({ roomState, myPlayerId, onOpenSettings }) {
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, marginLeft: '0.15rem' }}>
                 ({roomState.players?.length || 0}/10)
               </span>
+            </div>
+          )}
+
+          {/* Real-time Connection Status Indicator */}
+          {roomState?.roomId && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                padding: '0.3rem 0.65rem',
+                borderRadius: '20px',
+                background:
+                  connStatus === 'connected'
+                    ? 'rgba(16, 185, 129, 0.12)'
+                    : connStatus === 'reconnecting'
+                    ? 'rgba(245, 158, 11, 0.15)'
+                    : 'rgba(239, 68, 68, 0.15)',
+                color:
+                  connStatus === 'connected'
+                    ? '#10b981'
+                    : connStatus === 'reconnecting'
+                    ? '#f59e0b'
+                    : '#ef4444',
+                border: `1.5px solid ${
+                  connStatus === 'connected'
+                    ? 'rgba(16, 185, 129, 0.35)'
+                    : connStatus === 'reconnecting'
+                    ? 'rgba(245, 158, 11, 0.45)'
+                    : 'rgba(239, 68, 68, 0.45)'
+                }`
+              }}
+              title={
+                connStatus === 'connected'
+                  ? 'Real-time connection is live & synced'
+                  : 'Reconnecting to game host...'
+              }
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  background:
+                    connStatus === 'connected'
+                      ? '#10b981'
+                      : connStatus === 'reconnecting'
+                      ? '#f59e0b'
+                      : '#ef4444',
+                  boxShadow:
+                    connStatus === 'connected'
+                      ? '0 0 6px #10b981'
+                      : '0 0 6px #f59e0b',
+                  animation:
+                    connStatus !== 'connected' ? 'pulseYellow 1.5s infinite' : 'none'
+                }}
+              />
+              <span>
+                {connStatus === 'connected'
+                  ? 'Synced'
+                  : connStatus === 'reconnecting'
+                  ? 'Reconnecting...'
+                  : 'Disconnected'}
+              </span>
+
+              {connStatus !== 'connected' && !roomState.isHost && (
+                <button
+                  onClick={handleManualReconnect}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '0 0.2rem',
+                    color: 'inherit',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    fontSize: '0.68rem',
+                    fontWeight: 800
+                  }}
+                >
+                  Retry
+                </button>
+              )}
             </div>
           )}
 

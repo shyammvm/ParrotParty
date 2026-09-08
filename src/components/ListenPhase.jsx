@@ -35,7 +35,8 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
   }, [currentSoundIndex]);
 
   const playDemoSound = async () => {
-    if (!currentSound?.targetAudioUrl || isPlaying) return;
+    const demoSource = currentSound?.targetAudioUrl || currentSound?.soundUrl;
+    if (!demoSource || isPlaying) return;
     setIsPlaying(true);
     setProgress(0);
     voiceChatManager.setAutoMuted('DEMO_PLAYBACK', true);
@@ -53,7 +54,7 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
     animFrameRef.current = requestAnimationFrame(animateCursor);
 
     try {
-      await playAudioDataUrl(currentSound.targetAudioUrl);
+      await playAudioDataUrl(demoSource);
     } catch (err) {
       console.error('Play error:', err);
     } finally {

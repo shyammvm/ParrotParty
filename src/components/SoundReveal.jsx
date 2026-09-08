@@ -159,7 +159,8 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
 
   // Replay original demo prompt sound
   const handlePlayTargetDemo = async () => {
-    if (isPlayingAudio || !currentSound?.targetAudioUrl) return;
+    const demoSource = currentSound?.targetAudioUrl || currentSound?.soundUrl;
+    if (isPlayingAudio || !demoSource) return;
     setIsPlayingAudio(true);
     setPlayingAudioType('demo');
 
@@ -167,7 +168,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
     voiceChatManager.setAutoMuted('REVEAL_PLAYBACK', true);
 
     try {
-      await playAudioDataUrl(currentSound.targetAudioUrl);
+      await playAudioDataUrl(demoSource);
     } catch (e) {
       console.warn('[SoundReveal] Target demo play failed:', e);
     } finally {

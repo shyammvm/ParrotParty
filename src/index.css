@@ -367,6 +367,18 @@ body {
   }
 }
 
+@keyframes pulseYellow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(245, 158, 11, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
 @keyframes floatUpAndFade {
   0% {
     opacity: 0;

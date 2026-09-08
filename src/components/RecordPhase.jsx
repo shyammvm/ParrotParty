@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getAudioContext, scoreAudioComparison } from '../utils/audioAnalyzer';
 import { bufferToWavBlob } from '../utils/soundLibrary';
-import { blobToDataURL, dataURLToBlob, peerManager } from '../utils/peerManager';
+import { blobToDataURL, dataURLToBlob, fetchOrDataUrlToBlob, peerManager } from '../utils/peerManager';
 import { audioDeviceManager } from '../utils/audioDeviceManager';
 import { voiceChatManager } from '../utils/voiceChatManager';
 import { PlayerAvatar } from '../utils/avatarUtils';
@@ -221,17 +221,20 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
 
       const audioCtx = getAudioContext();
       const raw = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
-      let wav = raw;
+      let scoreBlob = raw;
       try {
         const ab = await raw.arrayBuffer();
         const buf = await audioCtx.decodeAudioData(ab);
-        wav = bufferToWavBlob(buf);
-      } catch (e) { console.warn('[Record] WAV conversion failed:', e); }
+        scoreBlob = bufferToWavBlob(buf);
+      } catch (e) {
+        console.warn('[Record] WAV decoding fallback:', e);
+      }
 
       try {
-        const targetBlob = dataURLToBlob(currentSound.targetAudioUrl);
-        const score = await scoreAudioComparison(targetBlob, wav);
-        const audioDataUrl = await blobToDataURL(wav);
+        const targetBlob = await fetchOrDataUrlToBlob(currentSound.targetAudioUrl || currentSound.soundUrl);
+        const score = await scoreAudioComparison(targetBlob, scoreBlob);
+        // Use compressed native blob for network transmission (10x smaller than WAV)
+        const audioDataUrl = await blobToDataURL(raw);
         const newRecs = [...(myPlayer?.recordings || [])];
         newRecs[currentSoundIndex] = {
           soundIndex: currentSoundIndex,

@@ -112,15 +112,15 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
         const sound = chosenSounds[i];
         setProgress({ current: i + 1, total: roundSoundsCount });
 
-        const { blob, audioBuffer, duration } = await loadSoundUrl(sound.soundUrl);
+        const { audioBuffer, duration } = await loadSoundUrl(sound.soundUrl);
         const pcm = audioBuffer.getChannelData(0);
         const waveformBars = extractWaveformBars(pcm, 120);
 
-        const dataUrl = await blobToDataURL(blob);
         soundPackItems.push({
           id: sound.id,
           title: sound.title,
-          targetAudioUrl: dataUrl,
+          soundUrl: sound.soundUrl,
+          targetAudioUrl: sound.soundUrl,
           duration,
           waveformBars
         });
