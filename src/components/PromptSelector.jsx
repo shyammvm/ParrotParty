@@ -169,7 +169,7 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
       <p className="card-subtitle" style={{ fontSize: '0.82rem', marginBottom: '0.55rem' }}>
         {isHost
           ? 'Choose match length and a sound pack to begin!'
-          : 'Sound packs for this round'
+          : 'Host is selecting a sound pack...'
         }
       </p>
 
@@ -426,12 +426,9 @@ export default function PromptSelector({ roomState, onSelectSoundPack }) {
             </button>
           </>
         ) : (
-          <div className="pack-status-box" style={{ margin: 0, padding: '0.45rem 0.75rem', textAlign: 'center' }}>
-            <span style={{ fontSize: '0.86rem', color: 'var(--text-main)', fontWeight: 700 }}>
-              {selectedPack?.title || 'Sound Pack'} • {roundSoundsCount} Sounds
-            </span>
-            <p style={{ margin: '0.15rem 0 0', fontSize: '0.76rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', justifyContent: 'center' }}>
-              <IconClock size={12} /> Starting soon...
+          <div className="pack-status-box" style={{ margin: 0, padding: '0.65rem 0.75rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center', fontWeight: 600 }}>
+              <IconClock size={14} /> Starting soon...
             </p>
           </div>
         )}
