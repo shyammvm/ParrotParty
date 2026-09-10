@@ -4,9 +4,9 @@ import { roomDirectory } from '../utils/roomDirectory';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import { capturePlayerSilent } from '../utils/silentPlayerTracker';
 import parrotLogo from '../assets/parrot-party.png';
-import { IconLogOut, IconRefresh, IconLock, IconSettings, IconX } from './Icons';
+import { IconLogOut, IconRefresh, IconLock, IconSettings, IconX, IconBookOpen, IconHelpCircle, IconArrowRight } from './Icons';
 
-export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, onLeaveRoom }) {
+export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, onLeaveRoom, onOpenHowToPlay }) {
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('parrot_player_name') || localStorage.getItem('tintom_player_name') || '');
   const [inputRoomId, setInputRoomId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -213,18 +213,27 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
           ))}
         </div>
 
-        {/* Audio setup trigger in lobby */}
-        {onOpenSettings && (
-          <div style={{ marginBottom: '1.25rem' }}>
+        {/* Audio setup & guide triggers in lobby */}
+        <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+          {onOpenSettings && (
             <button
               className="btn btn-secondary"
               onClick={onOpenSettings}
-              style={{ width: '100%', padding: '0.65rem', fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+              style={{ flex: 1, minWidth: 160, padding: '0.65rem', fontSize: '0.86rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
             >
-              <IconSettings size={14} /> Test Mic &amp; Audio Settings
+              <IconSettings size={14} /> Test Mic &amp; Audio
             </button>
-          </div>
-        )}
+          )}
+          {onOpenHowToPlay && (
+            <button
+              className="btn btn-secondary"
+              onClick={onOpenHowToPlay}
+              style={{ flex: 1, minWidth: 140, padding: '0.65rem', fontSize: '0.86rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+            >
+              <IconBookOpen size={14} color="var(--primary)" /> How to Play
+            </button>
+          )}
+        </div>
 
         {isHost ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -306,9 +315,20 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
         <p style={{ fontSize: '0.82rem', color: 'var(--primary)', fontWeight: 700, margin: '0 0 0.35rem 0', letterSpacing: '0.01em' }}>
           Good vibes, terrible impressions.
         </p>
-        <p className="card-subtitle" style={{ marginBottom: 0 }}>
+        <p className="card-subtitle" style={{ marginBottom: onOpenHowToPlay ? '0.65rem' : 0 }}>
           Create or join a room with a 4-digit code (up to 10 players)!
         </p>
+        {onOpenHowToPlay && (
+          <button
+            type="button"
+            className="home-guide-pill-btn"
+            onClick={onOpenHowToPlay}
+          >
+            <IconBookOpen size={13} color="var(--primary)" />
+            <span>How to play?</span>
+            <IconArrowRight size={12} />
+          </button>
+        )}
       </div>
 
       {/* Rejoin Previous Game Banner */}
@@ -347,6 +367,7 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
           </div>
         </div>
       )}
+
 
       {errorMsg && (
         <div style={{
@@ -509,6 +530,7 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
           </div>
         )}
       </div>
+
 
       {/* ── Passcode Protected Room Entry Modal ── */}
       {passcodeModalRoom && (

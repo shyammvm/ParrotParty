@@ -676,3 +676,47 @@ export function IconUsers({ size = 18, color = 'currentColor', className = '', s
   );
 }
 
+export function IconHelpCircle({ size = 18, color = 'currentColor', className = '', style = {}, ...props }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
+export function IconBookOpen({ size = 18, color = 'currentColor', className = '', style = {}, ...props }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
+      {...props}
+    >
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+    </svg>
+  );
+}
+
+

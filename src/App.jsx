@@ -8,6 +8,7 @@ import ListenPhase from './components/ListenPhase';
 import RecordPhase from './components/RecordPhase';
 import SoundReveal from './components/SoundReveal';
 import Leaderboard from './components/Leaderboard';
+import HowToPlay from './components/HowToPlay';
 import { peerManager } from './utils/peerManager';
 import { voiceChatManager } from './utils/voiceChatManager';
 import { stopCurrentAudio } from './utils/audioPlayer';
@@ -74,12 +75,47 @@ class PhaseErrorBoundary extends React.Component {
 export default function App() {
   const [roomState, setRoomState] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [currentView, setCurrentView] = useState(() => {
+    return window.location.hash === '#how-to-play' ? 'how-to-play' : 'home';
+  });
 
   useEffect(() => {
     peerManager.init((updatedState) => {
       setRoomState(updatedState);
     });
   }, []);
+
+  // Listen to URL hash change for browser Back/Forward navigation
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#how-to-play') {
+        setCurrentView('how-to-play');
+      } else {
+        setCurrentView('home');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleOpenHowToPlay = () => {
+    window.location.hash = 'how-to-play';
+    setCurrentView('how-to-play');
+  };
+
+  const handleBackToHome = () => {
+    if (window.location.hash === '#how-to-play') {
+      window.history.pushState('', document.title, window.location.pathname + window.location.search);
+    }
+    setCurrentView('home');
+  };
+
+  // When room starts or player joins room, return to active game/room view
+  useEffect(() => {
+    if (roomState?.roomId && currentView === 'how-to-play') {
+      handleBackToHome();
+    }
+  }, [roomState?.roomId]);
 
   // Auto-enable voice chat as soon as player enters a room
   useEffect(() => {
@@ -348,6 +384,9 @@ export default function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         onLeaveRoom={handleLeaveRoom}
         onTogglePause={handleTogglePause}
+        onOpenHowToPlay={handleOpenHowToPlay}
+        onGoHome={handleBackToHome}
+        currentView={currentView}
       />
 
       {roomState?.roomId && (
@@ -358,23 +397,30 @@ export default function App() {
       )}
 
       <main
-        key={`${gamePhase}-${roomState?.currentSoundIndex || 0}`}
+        key={currentView === 'how-to-play' ? 'how-to-play' : `${gamePhase}-${roomState?.currentSoundIndex || 0}`}
         className="phase-view-transition"
         style={{ width: '100%' }}
       >
-        <PhaseErrorBoundary phaseKey={`${gamePhase}-${roomState?.currentSoundIndex || 0}`}>
-          {gamePhase === 'LOBBY' && (
-            <Lobby
-              roomState={roomState}
-              onStartSelectPrompt={handleHostStartPromptSelect}
-              onOpenSettings={() => setIsSettingsOpen(true)}
-              onLeaveRoom={handleLeaveRoom}
-            />
-          )}
+        {currentView === 'how-to-play' ? (
+          <HowToPlay
+            onBack={handleBackToHome}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+          />
+        ) : (
+          <PhaseErrorBoundary phaseKey={`${gamePhase}-${roomState?.currentSoundIndex || 0}`}>
+            {gamePhase === 'LOBBY' && (
+              <Lobby
+                roomState={roomState}
+                onStartSelectPrompt={handleHostStartPromptSelect}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                onLeaveRoom={handleLeaveRoom}
+                onOpenHowToPlay={handleOpenHowToPlay}
+              />
+            )}
 
-          {gamePhase === 'PROMPT_SELECT' && (
-            <PromptSelector roomState={roomState} onSelectSoundPack={handleHostSelectSoundPack} />
-          )}
+            {gamePhase === 'PROMPT_SELECT' && (
+              <PromptSelector roomState={roomState} onSelectSoundPack={handleHostSelectSoundPack} />
+            )}
 
           {gamePhase === 'LISTEN' && (
             <ListenPhase roomState={roomState} onStartRecordingPhase={handleStartRecordingPhase} />
@@ -404,7 +450,8 @@ export default function App() {
               onPlayAgain={handlePlayAgainNextRound}
             />
           )}
-        </PhaseErrorBoundary>
+          </PhaseErrorBoundary>
+        )}
       </main>
 
       <AudioSettingsModal

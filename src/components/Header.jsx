@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import { peerManager } from '../utils/peerManager';
 import parrotLogo from '../assets/parrot-party.png';
-import { IconShare, IconCheck, IconLogOut, IconSettings, IconPause, IconPlay } from './Icons';
+import { IconShare, IconCheck, IconLogOut, IconSettings, IconPause, IconPlay, IconBookOpen } from './Icons';
 
-export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveRoom, onTogglePause }) {
+export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveRoom, onTogglePause, onOpenHowToPlay, onGoHome, currentView }) {
   const [copied, setCopied] = useState(false);
   const [connStatus, setConnStatus] = useState(() => peerManager.getConnectionStatus());
 
@@ -39,7 +39,12 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
       <div className="header-container">
 
         {/* Brand Group */}
-        <div className="header-brand">
+        <div
+          className="header-brand"
+          onClick={currentView === 'how-to-play' && onGoHome ? onGoHome : undefined}
+          style={{ cursor: currentView === 'how-to-play' ? 'pointer' : 'default' }}
+          title={currentView === 'how-to-play' ? 'Back to Home' : undefined}
+        >
           <img
             src={parrotLogo}
             alt="Parrot Party Logo"
@@ -143,6 +148,19 @@ export default function Header({ roomState, myPlayerId, onOpenSettings, onLeaveR
                   <span>Pause</span>
                 </>
               )}
+            </button>
+          )}
+
+          {/* How to Play Button */}
+          {onOpenHowToPlay && (
+            <button
+              type="button"
+              className={`btn ${currentView === 'how-to-play' ? 'btn-primary' : 'btn-secondary'} header-btn`}
+              onClick={onOpenHowToPlay}
+              title="How to Play &amp; Game Guide"
+            >
+              <IconBookOpen size={13} />
+              <span>How to Play</span>
             </button>
           )}
 

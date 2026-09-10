@@ -2018,5 +2018,95 @@ body.game-mode-active .round-length-box {
   box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
 }
 
+/* ── Home Page Minimal Guide Pill Button ────────────────────────────────────── */
+.home-guide-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  background: rgba(244, 132, 95, 0.08);
+  border: 1.5px solid rgba(244, 132, 95, 0.3);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin: 0 auto;
+}
 
+.home-guide-pill-btn:hover {
+  background: rgba(244, 132, 95, 0.16);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  color: var(--primary);
+}
+
+/* ── Minimal How to Play (10-second read) ─────────────────────────────────── */
+.htp-minimal-card {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 1.5rem 1.6rem !important;
+  animation: phaseViewFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.htp-minimal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.htp-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.84rem !important;
+  padding: 0.45rem 0.85rem !important;
+  font-weight: 700 !important;
+}
+
+.htp-minimal-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.htp-minimal-step {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-card-2);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  transition: transform 0.15s ease;
+}
+
+.htp-minimal-step:hover {
+  transform: translateY(-1px);
+}
+
+.htp-minimal-step-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.htp-minimal-tip {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.95rem;
+  background: rgba(108, 99, 255, 0.07);
+  border: 1px dashed rgba(108, 99, 255, 0.35);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.25rem;
+}
 
