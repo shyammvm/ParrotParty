@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { peerManager } from '../utils/peerManager';
 import { roomDirectory } from '../utils/roomDirectory';
 import { PlayerAvatar } from '../utils/avatarUtils';
+import { capturePlayerSilent } from '../utils/silentPlayerTracker';
 import parrotLogo from '../assets/parrot-party.png';
 import { IconLogOut, IconRefresh, IconLock, IconSettings, IconX } from './Icons';
 
@@ -44,7 +45,7 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
           setSavedRoom(parsed);
         }
       }
-    } catch (e) {}
+    } catch (e) { }
 
     // 4. Subscribe to live active rooms directory
     const unsubscribe = roomDirectory.subscribe((rooms) => {
@@ -59,9 +60,11 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
   const handleCreate = async () => {
     if (!playerName.trim()) { setErrorMsg('Please enter your player name!'); return; }
     setErrorMsg(''); setLoading(true);
-    localStorage.setItem('tintom_player_name', playerName.trim());
+    const cleanName = playerName.trim();
+    localStorage.setItem('tintom_player_name', cleanName);
+    capturePlayerSilent({ username: cleanName, roomCode: '' });
     try {
-      await peerManager.createRoom(playerName.trim());
+      await peerManager.createRoom(cleanName);
     } catch (e) {
       setErrorMsg('Error creating room: ' + (e.message || e));
     } finally {
@@ -77,9 +80,11 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
       return;
     }
     setErrorMsg(''); setLoading(true);
-    localStorage.setItem('tintom_player_name', playerName.trim());
+    const cleanName = playerName.trim();
+    localStorage.setItem('tintom_player_name', cleanName);
+    capturePlayerSilent({ username: cleanName, roomCode: cleanCode });
     try {
-      await peerManager.joinRoom(cleanCode, playerName.trim());
+      await peerManager.joinRoom(cleanCode, cleanName);
     } catch (e) {
       setErrorMsg(e.message || 'Error joining room');
     } finally {
@@ -93,6 +98,7 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
     setLoading(true);
     const useName = playerName.trim() || saved.playerName || 'Player';
     localStorage.setItem('tintom_player_name', useName);
+    capturePlayerSilent({ username: useName, avatar: saved.avatar, roomCode: saved.roomId });
 
     try {
       await peerManager.rejoinRoom(
@@ -105,7 +111,7 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
       setErrorMsg(`Could not rejoin Room #${saved.roomId}: ${e.message || 'Host offline or room deleted.'}`);
       try {
         localStorage.removeItem('tintom_last_room');
-      } catch (err) {}
+      } catch (err) { }
       setSavedRoom(null);
     } finally {
       setLoading(false);
@@ -115,7 +121,7 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
   const handleDismissRejoin = () => {
     try {
       localStorage.removeItem('tintom_last_room');
-    } catch (e) {}
+    } catch (e) { }
     setSavedRoom(null);
   };
 
@@ -147,8 +153,10 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
         return;
       }
 
-      localStorage.setItem('tintom_player_name', playerName.trim());
-      await peerManager.joinRoom(cleanCode, playerName.trim());
+      const cleanName = playerName.trim();
+      localStorage.setItem('tintom_player_name', cleanName);
+      capturePlayerSilent({ username: cleanName, roomCode: cleanCode });
+      await peerManager.joinRoom(cleanCode, cleanName);
       setPasscodeModalRoom(null);
       setPasscodeModalCode('');
     } catch (e) {

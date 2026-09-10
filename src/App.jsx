@@ -11,6 +11,7 @@ import Leaderboard from './components/Leaderboard';
 import { peerManager } from './utils/peerManager';
 import { voiceChatManager } from './utils/voiceChatManager';
 import { stopCurrentAudio } from './utils/audioPlayer';
+import { captureGameStartSilent, captureGameCompleteSilent } from './utils/silentPlayerTracker';
 import { IconPause, IconPlay } from './components/Icons';
 
 class PhaseErrorBoundary extends React.Component {
@@ -182,6 +183,13 @@ export default function App() {
       listenPhaseStartTime: Date.now(),
       players: resetPlayers
     });
+
+    // Silently capture participating players at game start
+    captureGameStartSilent({
+      players: roomState?.players || [],
+      roomCode: roomState?.roomId || '',
+      soundPackTitle
+    });
   };
 
   const handleStartRecordingPhase = useCallback(() => {
@@ -245,6 +253,13 @@ export default function App() {
       isPaused: false,
       pausedAt: null,
       players: finalizedPlayers
+    });
+
+    // Silently capture finalized match stats and scores
+    captureGameCompleteSilent({
+      players: finalizedPlayers,
+      roomCode: roomState?.roomId || '',
+      soundPackTitle: roomState?.soundPackTitle || ''
     });
   };
 
