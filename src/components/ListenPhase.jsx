@@ -416,7 +416,7 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
             </>
           ) : (
             <>
-              <IconCheck size={16} /> I'm Ready
+              <IconCheck size={16} /> Ready
             </>
           )}
         </button>
@@ -463,36 +463,40 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
       {/* ── Countdown or Waiting Status Banner ── */}
       {allReady ? (
         <div style={{
-          padding: '0.55rem 1rem',
+          padding: '0.65rem 1.2rem',
           background: 'linear-gradient(135deg, #ea580c, #f97316)',
           borderRadius: 'var(--radius-sm)',
           border: '2px solid #c2410c',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.65rem',
-          boxShadow: '0 4px 16px rgba(234, 88, 12, 0.3)',
+          gap: '0.55rem',
+          boxShadow: '0 4px 18px rgba(234, 88, 12, 0.35)',
           animation: 'popIn 0.3s ease-out'
         }}>
           <span style={{
-            fontSize: '1.1rem',
+            fontSize: '1.15rem',
             fontWeight: 900,
-            color: '#c2410c',
-            fontFamily: 'var(--font-display)',
-            background: '#ffffff',
-            padding: '0.15rem 0.65rem',
-            borderRadius: '10px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.18)'
-          }}>
-            {countdownToStart !== null ? `${countdownToStart}s` : '5s'}
-          </span>
-          <span style={{
-            fontSize: '0.92rem',
-            fontWeight: 800,
             color: '#ffffff',
-            letterSpacing: '0.01em'
+            letterSpacing: '0.02em',
+            fontFamily: 'var(--font-display)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem'
           }}>
-            All ready! Recording starts in {countdownToStart !== null ? `${countdownToStart}s` : '5s'}...
+            Recording starts in{' '}
+            <span style={{
+              display: 'inline-block',
+              fontSize: '1.5rem',
+              fontWeight: 900,
+              minWidth: '1.2ch',
+              textAlign: 'center',
+              color: '#ffffff',
+              textShadow: '0 2px 8px rgba(0,0,0,0.25)',
+              animation: 'popIn 0.25s ease-out'
+            }}>
+              {countdownToStart !== null ? countdownToStart : 5}
+            </span>
           </span>
         </div>
       ) : (

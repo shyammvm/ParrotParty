@@ -378,11 +378,16 @@ export default function App() {
               roomState={roomState}
               onNextSound={handleNextSound}
               onFinishAllSounds={handleFinishAllSounds}
+              onShowLeaderboard={handleFinishAllSounds}
             />
           )}
 
           {gamePhase === 'LEADERBOARD' && (
-            <Leaderboard roomState={roomState} onPlayAgain={handlePlayAgainNextRound} />
+            <Leaderboard
+              roomState={roomState}
+              onNextSound={handleNextSound}
+              onPlayAgain={handlePlayAgainNextRound}
+            />
           )}
         </PhaseErrorBoundary>
       </main>

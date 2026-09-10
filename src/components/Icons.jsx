@@ -193,6 +193,48 @@ export function IconArrowRight({ size = 18, color = 'currentColor', className = 
   );
 }
 
+export function IconArrowUp({ size = 16, color = 'currentColor', className = '', style = {}, ...props }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
+      {...props}
+    >
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <polyline points="5 12 12 5 19 12" />
+    </svg>
+  );
+}
+
+export function IconArrowDown({ size = 16, color = 'currentColor', className = '', style = {}, ...props }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
+      {...props}
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <polyline points="19 12 12 19 5 12" />
+    </svg>
+  );
+}
+
 export function IconRefresh({ size = 18, color = 'currentColor', className = '', style = {}, ...props }) {
   return (
     <svg

@@ -6,20 +6,16 @@ import { audioDeviceManager } from '../utils/audioDeviceManager';
 import { voiceChatManager } from '../utils/voiceChatManager';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import WaveformDisplay from './WaveformDisplay';
-import PhaseIntroOverlay from './PhaseIntroOverlay';
 import ParrotMascot from './ParrotMascot';
-import { IconMic, IconVolume, IconSettings, IconCheck, IconClock, IconWaveform, IconSparkles, IconUsers, IconFlame } from './Icons';
+import { IconMic, IconVolume, IconSettings, IconCheck, IconWaveform, IconSparkles, IconUsers, IconFlame } from './Icons';
 
 const NUM_BARS = 120;
-const RECORD_TIME_LIMIT = 30; // 30-second recording phase limit
 
 export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings }) {
-  const [phase, setPhase] = useState('IDLE'); // IDLE | COUNTDOWN | RECORDING | PROCESSING | DONE
+  const [phase, setPhase] = useState('IDLE'); // IDLE | COUNTDOWN | RECORDING | PROCESSING | DONE | MIC_ERROR
   const [countdown, setCountdown] = useState(3);
   const [elapsed, setElapsed] = useState(0);
   const [micLevel, setMicLevel] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(RECORD_TIME_LIMIT);
-  const [showIntro, setShowIntro] = useState(true);
 
   // Live waveform accumulation
   const [recordedBars, setRecordedBars] = useState(null); // Array(NUM_BARS) of null | 0-1
@@ -38,16 +34,14 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
   const animFrameRef = useRef(null);
   const recordingStartMsRef = useRef(0);
   const accBarsRef = useRef(Array(NUM_BARS).fill(null)); // accumulator
-  const localRecordStartMsRef = useRef(Date.now());
-  const hasAutoSubmittedRef = useRef(false);
   const hasAutoAdvancedRef = useRef(false);
+  const hasAutoStartedRecordRef = useRef(false);
   const autoAdvanceTimerRef = useRef(null);
 
   const testChunksRef = useRef([]);
   const testStreamRef = useRef(null);
   const testAnimRef = useRef(null);
 
-  const recordPhaseStartTime = roomState?.recordPhaseStartTime;
   const currentSoundIndex = roomState?.currentSoundIndex || 0;
   const soundPack = roomState?.soundPack || [];
   const currentSound = soundPack[currentSoundIndex] || soundPack[0];
@@ -69,11 +63,8 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
     setRecordedBars(null);
     accBarsRef.current = Array(NUM_BARS).fill(null);
     voiceChatManager.setAutoMuted('RECORDING', false);
-    setTimeLeft(RECORD_TIME_LIMIT);
-    setShowIntro(true);
-    localRecordStartMsRef.current = Date.now();
-    hasAutoSubmittedRef.current = false;
     hasAutoAdvancedRef.current = false;
+    hasAutoStartedRecordRef.current = false;
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
       autoAdvanceTimerRef.current = null;
@@ -210,9 +201,9 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
       const result = await openMicStream();
       analyser = result.analyser;
     } catch (err) {
-      alert('Microphone error: ' + err.message);
+      console.warn('Microphone error:', err);
       voiceChatManager.setAutoMuted('RECORDING', false);
-      setPhase('IDLE');
+      setPhase('MIC_ERROR');
       return;
     }
 
@@ -254,10 +245,9 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
       recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
     } catch (recErr) {
       console.error('[Record] MediaRecorder initialization error:', recErr);
-      alert('Failed to initialize audio recorder: ' + recErr.message);
       stopStream(micStreamRef, animFrameRef);
       voiceChatManager.setAutoMuted('RECORDING', false);
-      setPhase('IDLE');
+      setPhase('MIC_ERROR');
       return;
     }
 
@@ -334,87 +324,26 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
     }, targetDuration * 1000);
   };
 
-  // Fallback auto-submit if 30-second recording timer runs out
-  const submitTimeoutFallback = useCallback(() => {
-    if (hasRecorded || hasAutoSubmittedRef.current) return;
-    hasAutoSubmittedRef.current = true;
-
-    // If recorder is actively recording, stop it so onstop handles scoring
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch (e) {}
-      return;
-    }
-
-    // Otherwise, create a timeout placeholder entry
-    const newRecs = [...(myPlayer?.recordings || [])];
-    newRecs[currentSoundIndex] = {
-      soundIndex: currentSoundIndex,
-      title: currentSound?.title || 'Sound',
-      audioDataUrl: null,
-      scoreResult: {
-        overallScore: 0,
-        pitchScore: 0,
-        similarityScore: 0,
-        rhythmScore: 0,
-        timbreScore: 0,
-        funnyTitle: "Time Expired"
-      }
-    };
-
-    const validScores = newRecs.filter(Boolean).map(r => r.scoreResult?.overallScore || 0);
-    const totalScore = validScores.reduce((a, b) => a + b, 0);
-    const averageScore = validScores.length > 0 ? Math.round(totalScore / validScores.length) : 0;
-
-    peerManager.submitPlayerAudioPack(newRecs, {
-      totalScore,
-      averageScore,
-      overallScore: totalScore,
-      soundScores: validScores
-    });
-
-    setPhase('DONE');
-    voiceChatManager.setAutoMuted('RECORDING', false);
-  }, [hasRecorded, myPlayer?.recordings, currentSoundIndex, currentSound?.title]);
-
-  // 30-second recording phase countdown ticker (freezes if paused, begins after 2.4s intro)
+  // Auto-start 3, 2, 1, record automatically as soon as phase mounts / starts
   useEffect(() => {
-    const checkTimer = () => {
-      if (roomState?.isPaused) return;
+    if (hasRecorded || hasAutoStartedRecordRef.current || roomState?.isPaused) return;
 
-      const baseStart = recordPhaseStartTime || localRecordStartMsRef.current;
-      const effectiveStart = baseStart + 1800; // Account for 1.8s intro animation
-      const now = Date.now();
-      if (now < effectiveStart) {
-        setTimeLeft(RECORD_TIME_LIMIT);
-        return;
-      }
+    hasAutoStartedRecordRef.current = true;
+    const timer = setTimeout(() => {
+      startCountdownAndRecord();
+    }, 150);
 
-      const elapsedSec = Math.max(0, (now - effectiveStart) / 1000);
-      const remaining = Math.max(0, Math.ceil(RECORD_TIME_LIMIT - elapsedSec));
-      setTimeLeft(remaining);
+    return () => clearTimeout(timer);
+  }, [currentSoundIndex, hasRecorded, roomState?.isPaused]);
 
-      // If 30 seconds run out and player hasn't recorded yet:
-      if (remaining <= 0 && !hasRecorded) {
-        submitTimeoutFallback();
-      }
-    };
-
-    checkTimer();
-    const interval = setInterval(checkTimer, 250);
-    return () => clearInterval(interval);
-  }, [recordPhaseStartTime, roomState?.isPaused, hasRecorded, submitTimeoutFallback]);
-
-
-  // Host auto-advance automatically when all players have recorded and status is Ready
+  // Host auto-advance automatically when all players have recorded
   useEffect(() => {
     if (!isHost || !allReady || hasAutoAdvancedRef.current) return;
 
     hasAutoAdvancedRef.current = true;
     autoAdvanceTimerRef.current = setTimeout(() => {
       onSoundComplete();
-    }, 1200);
+    }, 1000);
 
     return () => {
       if (autoAdvanceTimerRef.current) {
@@ -423,37 +352,8 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
     };
   }, [isHost, allReady, onSoundComplete]);
 
-  // Fallback: auto-advance if 30s recording timer expires
-  useEffect(() => {
-    if (!isHost || timeLeft > 0 || hasAutoAdvancedRef.current || players.length === 0) return;
-
-    hasAutoAdvancedRef.current = true;
-    autoAdvanceTimerRef.current = setTimeout(() => {
-      onSoundComplete();
-    }, 1500);
-
-    return () => {
-      if (autoAdvanceTimerRef.current) {
-        clearTimeout(autoAdvanceTimerRef.current);
-      }
-    };
-  }, [isHost, timeLeft <= 0, players.length, onSoundComplete]);
-
   const recordingProgress = elapsed / targetDuration;
   const selectedDevice = devices.find(d => d.deviceId === selectedDeviceId);
-
-  const isUrgent = timeLeft <= 5;
-  const isWarning = timeLeft <= 10 && !isUrgent;
-  const timerBadgeColor = isUrgent
-    ? '#dc2626'
-    : isWarning
-      ? '#b45309'
-      : '#c2410c';
-  const timerBadgeBg = isUrgent
-    ? 'rgba(239, 68, 68, 0.12)'
-    : isWarning
-      ? 'rgba(245, 158, 11, 0.12)'
-      : 'rgba(244, 132, 95, 0.12)';
 
   return (
     <div className="card arcade-stage-card" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.42rem', padding: '0.75rem 1.1rem' }}>
@@ -511,7 +411,7 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
           </div>
         </div>
 
-        {/* Right Utility Chips: Sleek Mic Pill + Arcade Countdown Badge */}
+        {/* Right Utility Chips: Sleek Mic Pill */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
           <button
             type="button"
@@ -520,47 +420,12 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
             title="Audio Input Device & Settings"
           >
             <IconMic size={13} color="var(--primary)" />
-            <span style={{ maxWidth: 85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ maxWidth: 95, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {selectedDevice?.label ? selectedDevice.label.split('(')[0]?.trim() : 'Default Mic'}
             </span>
             <IconSettings size={11} color="var(--text-muted)" />
           </button>
-
-          <span style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '0.92rem',
-            fontWeight: 800,
-            color: timerBadgeColor,
-            background: timerBadgeBg,
-            padding: '0.18rem 0.65rem',
-            borderRadius: '12px',
-            border: `1.5px solid ${timerBadgeColor}`,
-            animation: isUrgent ? 'pulse 1s infinite' : 'none',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.3rem'
-          }}>
-            <IconClock size={13} /> {timeLeft > 0 ? `${timeLeft}s` : "Time's Up!"}
-          </span>
         </div>
-      </div>
-
-      {/* ── Sleek Progress Indicator ── */}
-      <div style={{
-        width: '100%',
-        height: '4px',
-        background: 'rgba(0,0,0,0.06)',
-        borderRadius: '2px',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          width: `${Math.max(0, Math.min(100, (timeLeft / RECORD_TIME_LIMIT) * 100))}%`,
-          height: '100%',
-          background: isUrgent
-            ? 'linear-gradient(90deg, #dc2626, #ef4444)'
-            : 'linear-gradient(90deg, var(--primary), var(--secondary))',
-          transition: 'width 0.25s linear'
-        }} />
       </div>
 
       {/* ── Glowing Waveform Stage Box (Compact 75px height) ── */}
@@ -606,14 +471,33 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
         </div>
       </div>
 
-      {/* ── Phase Interaction Zone: 3D Arcade Tactile Action ── */}
+      {/* ── Phase Interaction Zone: Automatic 3, 2, 1, RECORD Flow ── */}
       {phase === 'IDLE' && !hasRecorded && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.6rem',
+          padding: '0.55rem 1rem',
+          background: 'rgba(244, 132, 95, 0.08)',
+          borderRadius: '14px',
+          border: '1.5px solid rgba(244, 132, 95, 0.25)',
+          color: 'var(--primary)',
+          fontWeight: 800,
+          fontSize: '0.92rem'
+        }}>
+          <IconMic size={18} />
+          <span>Get ready to record...</span>
+        </div>
+      )}
+
+      {phase === 'MIC_ERROR' && (
         <button
           className="btn-arcade-3d"
           onClick={startCountdownAndRecord}
-          style={{ width: '100%', padding: '0.68rem 1.4rem', fontSize: '1.06rem', letterSpacing: '0.02em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+          style={{ width: '100%', padding: '0.68rem 1.4rem', fontSize: '1.02rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
         >
-          <IconMic size={19} /> START RECORDING
+          <IconMic size={18} /> Microphone Access Needed — Click to Record
         </button>
       )}
 
@@ -622,28 +506,31 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.8rem',
-          padding: '0.35rem',
-          background: 'rgba(234, 88, 12, 0.1)',
+          gap: '0.9rem',
+          padding: '0.45rem',
+          background: 'rgba(234, 88, 12, 0.12)',
           borderRadius: '14px',
-          border: '1.5px solid rgba(234, 88, 12, 0.3)'
+          border: '1.5px solid rgba(234, 88, 12, 0.35)'
         }}>
           <span style={{
-            fontSize: '0.85rem',
+            fontSize: '0.92rem',
             color: '#c2410c',
-            fontWeight: 800,
+            fontWeight: 900,
+            fontFamily: 'var(--font-display)',
             textTransform: 'uppercase',
-            letterSpacing: '1px'
+            letterSpacing: '1.5px'
           }}>
             RECORDING IN
           </span>
           <span
             key={countdown}
             style={{
-              fontSize: '2.6rem',
+              fontSize: '2.8rem',
               fontWeight: 900,
               color: '#ea580c',
               lineHeight: 1,
+              fontFamily: 'var(--font-display)',
+              display: 'inline-block',
               animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
             }}
           >
@@ -657,19 +544,29 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '0.75rem',
-          padding: '0.35rem',
+          gap: '0.85rem',
+          padding: '0.45rem 1.2rem',
           background: 'rgba(244, 63, 94, 0.12)',
-          border: '1.5px solid rgba(244, 63, 94, 0.35)',
-          borderRadius: '14px'
+          border: '2px solid rgba(244, 63, 94, 0.45)',
+          borderRadius: '14px',
+          boxShadow: '0 0 20px rgba(244, 63, 94, 0.2)'
         }}>
-          <div style={{ fontSize: '2.1rem', fontWeight: 900, color: '#f43f5e', lineHeight: 1 }}>
+          <span style={{
+            color: '#e11d48',
+            fontWeight: 900,
+            fontSize: '1.25rem',
+            fontFamily: 'var(--font-display)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            letterSpacing: '0.04em'
+          }}>
+            <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#e11d48', boxShadow: '0 0 10px #e11d48', display: 'inline-block' }} />
+            RECORD!
+          </span>
+          <div style={{ fontSize: '1.9rem', fontWeight: 900, color: '#f43f5e', lineHeight: 1, fontFamily: 'var(--font-display)' }}>
             {Math.max(0, targetDuration - elapsed).toFixed(1)}s
           </div>
-          <span style={{ color: '#f43f5e', fontWeight: 800, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f43f5e', boxShadow: '0 0 10px #f43f5e', display: 'inline-block' }} />
-            RECORDING — match the groove!
-          </span>
         </div>
       )}
 
@@ -749,17 +646,8 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
           animation: 'popIn 0.3s ease-out'
         }}>
           <IconCheck size={18} color="#ffffff" />
-          <span>All mimics recorded! Moving to Review...</span>
+          <span>All mimics recorded! Moving to sound reveal...</span>
         </div>
-      )}
-
-      {showIntro && (
-        <PhaseIntroOverlay
-          type="RECORD_START"
-          roundNumber={currentSoundIndex + 1}
-          durationMs={1800}
-          onComplete={() => setShowIntro(false)}
-        />
       )}
     </div>
   );

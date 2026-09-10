@@ -96,7 +96,7 @@ export default function PhaseIntroOverlay({
               margin: '0.25rem 0 0 0'
             }}
           >
-            <IconClock size={18} /> 30 SECONDS TO RECORD
+            <IconMic size={18} /> GET READY TO SQUAWK!
           </div>
         )}
 

@@ -16,9 +16,9 @@ import { IconPlay, IconVolume, IconReplay, IconArrowRight, IconTrophy, IconWavef
  * 4. Option to replay recording and target demo sound as many times as desired.
  * 5. Synchronized live emoji reactions floating on screen.
  */
-const REVEAL_DISCUSSION_LIMIT = 30; // 30 seconds review timer per player
+const REVEAL_DISCUSSION_LIMIT = 15; // 15 seconds review timer per player
 
-export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds }) {
+export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds, onShowLeaderboard }) {
   const [stage, setStage] = useState('PLAYER_PLAYING'); // 'PLAYER_PLAYING' | 'SCORE_REVEALED'
   const [animatedScore, setAnimatedScore] = useState(0);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -209,10 +209,12 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
 
     if (!isLastPlayer) {
       handleAdvanceNextPlayer();
-    } else if (!isLastSound) {
-      onNextSound();
     } else {
-      onFinishAllSounds();
+      if (onShowLeaderboard) {
+        onShowLeaderboard();
+      } else {
+        onFinishAllSounds();
+      }
     }
   };
 
@@ -346,29 +348,30 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
             Revealing {revealPlayerIndex + 1} of {players.length}
           </span>
         </div>
-        <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.15rem' }}>
+        <div style={{ display: 'flex', gap: '0.45rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
           {leaderboard.map((p, idx) => {
             const isCurrentRevealed = p.id === currentPlayer?.id;
+            const playerName = p.name || p.playerName || 'Player';
             return (
               <div
                 key={p.id}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.35rem',
-                  padding: '0.2rem 0.55rem',
+                  gap: '0.4rem',
+                  padding: '0.25rem 0.65rem',
                   borderRadius: '16px',
                   background: isCurrentRevealed ? 'rgba(244, 132, 95, 0.18)' : 'var(--bg-card-2)',
                   border: isCurrentRevealed ? '1.5px solid var(--primary)' : '1.5px solid var(--border-color)',
                   flexShrink: 0
                 }}
               >
-                <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)' }}>
                   #{idx + 1}
                 </span>
-                <PlayerAvatar name={p.name} avatar={p.avatar} size={20} />
-                <span style={{ fontSize: '0.76rem', fontWeight: 600 }}>{p.name}</span>
-                <strong style={{ fontSize: '0.8rem', color: 'var(--primary)', fontFamily: 'var(--font-display)' }}>
+                <PlayerAvatar name={playerName} avatar={p.avatar} size={22} />
+                <strong style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-main)' }}>{playerName}</strong>
+                <strong style={{ fontSize: '0.84rem', color: 'var(--primary)', fontFamily: 'var(--font-display)', marginLeft: '0.15rem' }}>
                   {p.cumulativeScore}
                 </strong>
               </div>
@@ -631,13 +634,14 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                     </span>
                     <IconArrowRight size={16} />
                   </button>
-                ) : !isLastSound ? (
+                ) : (
                   <button
                     className="btn btn-primary"
-                    onClick={onNextSound}
-                    style={{ width: '100%', padding: '0.65rem 1.2rem', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
+                    onClick={onShowLeaderboard || onFinishAllSounds}
+                    style={{ width: '100%', padding: '0.65rem 1.2rem', fontSize: '0.98rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
                   >
-                    <span>Proceed to Next Sound ({currentSoundIndex + 2}/{totalSounds})</span>
+                    <IconTrophy size={18} />
+                    <span>View Leaderboard</span>
                     <span style={{
                       fontSize: '0.78rem',
                       opacity: 0.85,
@@ -649,24 +653,6 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                     </span>
                     <IconArrowRight size={16} />
                   </button>
-                ) : (
-                  <button
-                    className="btn btn-success"
-                    onClick={onFinishAllSounds}
-                    style={{ width: '100%', padding: '0.65rem 1.2rem', fontSize: '0.98rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
-                  >
-                    <IconTrophy size={18} />
-                    <span>View Final Leaderboard</span>
-                    <span style={{
-                      fontSize: '0.78rem',
-                      opacity: 0.85,
-                      background: 'rgba(0,0,0,0.2)',
-                      padding: '0.1rem 0.45rem',
-                      borderRadius: '8px'
-                    }}>
-                      {timeLeft}s
-                    </span>
-                  </button>
                 )}
               </div>
             ) : (
@@ -674,7 +660,7 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds 
                 <IconClock size={14} />
                 {!isLastPlayer
                   ? `Next player advancing in ${timeLeft}s (or when host clicks next)...`
-                  : (!isLastSound ? `Round finished — next sound in ${timeLeft}s...` : `All sounds finished — final results in ${timeLeft}s...`)
+                  : `All mimics revealed! Leaderboard in ${timeLeft}s...`
                 }
               </p>
             )}
