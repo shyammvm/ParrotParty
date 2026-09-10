@@ -5,6 +5,7 @@ import { PlayerAvatar } from '../utils/avatarUtils';
 import { peerManager } from '../utils/peerManager';
 import { voiceChatManager } from '../utils/voiceChatManager';
 import { IconPlay, IconVolume, IconReplay, IconArrowRight, IconTrophy, IconWaveform, IconClock, IconHeadphones } from './Icons';
+import ScoreEffectsOverlay from './ScoreEffectsOverlay';
 
 /**
  * SoundReveal – Per-sound synchronized reveal phase.
@@ -28,6 +29,8 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds,
 
   const revealTimerStartMsRef = useRef(null);
   const hasAutoAdvancedRef = useRef(false);
+  const mainCardRef = useRef(null);
+  const effectsTriggerRef = useRef(null);
 
   const isHost = roomState?.isHost;
   const myPlayerId = roomState?.myPlayerId;
@@ -54,6 +57,14 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds,
   useEffect(() => {
     const unsub = peerManager.onReaction((msg) => {
       if (!msg || !msg.emoji) return;
+
+      // Trigger synchronized effects when egg or confetti reaction is broadcast
+      if (msg.emoji === '🥚' || msg.emoji === 'EGG_THROW') {
+        effectsTriggerRef.current?.throwEgg();
+      } else if (msg.emoji === '🎉' || msg.emoji === 'CONFETTI_POP') {
+        effectsTriggerRef.current?.popConfetti();
+      }
+
       const reactionId = `react-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const randomLeft = 15 + Math.random() * 70; // 15% to 85% width
 
@@ -266,6 +277,18 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds,
     peerManager.sendReaction(emoji);
   };
 
+  // Interactive egg throw handler for low scores (<25)
+  const handleThrowEggReaction = () => {
+    effectsTriggerRef.current?.throwEgg();
+    peerManager.sendReaction('🥚');
+  };
+
+  // Interactive confetti blast handler for high scores (75+)
+  const handleConfettiPopReaction = () => {
+    effectsTriggerRef.current?.popConfetti();
+    peerManager.sendReaction('🎉');
+  };
+
   // Host advance to next player
   const handleAdvanceNextPlayer = () => {
     if (!isHost) return;
@@ -381,7 +404,27 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds,
       </div>
 
       {/* ── Main Player Reveal Card (Compact 1-Page Design) ── */}
-      <div className="card" style={{ textAlign: 'center', position: 'relative', padding: '0.75rem 1.1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+      <div
+        ref={mainCardRef}
+        className="card"
+        style={{
+          textAlign: 'center',
+          position: 'relative',
+          padding: '0.75rem 1.1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.4rem',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Score Effects Overlay (Egg Throwing for <25 & Celebratory Confetti for 75+) */}
+        <ScoreEffectsOverlay
+          score={playerScore}
+          isActive={stage === 'SCORE_REVEALED'}
+          containerRef={mainCardRef}
+          onExternalTriggerRef={effectsTriggerRef}
+        />
+
         {/* Header: Sound Pill + Player Info */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
@@ -531,6 +574,45 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds,
           gap: '0.4rem',
           flexWrap: 'wrap'
         }}>
+          {/* Quick interactive action for low (<25) and high (75+) scores */}
+          {stage === 'SCORE_REVEALED' && playerScore < 25 && (
+            <button
+              className="btn btn-egg-throw"
+              onClick={handleThrowEggReaction}
+              style={{
+                padding: '0.2rem 0.65rem',
+                fontSize: '0.8rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                borderRadius: '20px',
+                cursor: 'pointer'
+              }}
+              title="Throw an egg at this mimic!"
+            >
+              <span style={{ fontSize: '1.05rem' }}>🥚</span> Throw Egg!
+            </button>
+          )}
+
+          {stage === 'SCORE_REVEALED' && playerScore >= 75 && (
+            <button
+              className="btn btn-confetti-pop"
+              onClick={handleConfettiPopReaction}
+              style={{
+                padding: '0.2rem 0.65rem',
+                fontSize: '0.8rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                borderRadius: '20px',
+                cursor: 'pointer'
+              }}
+              title="Blast celebratory confetti!"
+            >
+              <span style={{ fontSize: '1.05rem' }}>🎉</span> Pop Confetti!
+            </button>
+          )}
+
           {['😂', '👏', '💀', '🔥', '🏆', '😱', '💩'].map(emoji => (
             <button
               key={emoji}
@@ -656,11 +738,11 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds,
                 )}
               </div>
             ) : (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: '0.2rem 0', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
-                <IconClock size={14} />
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: '0.2rem 0', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
+                <IconClock size={13} />
                 {!isLastPlayer
-                  ? `Next player advancing in ${timeLeft}s (or when host clicks next)...`
-                  : `All mimics revealed! Leaderboard in ${timeLeft}s...`
+                  ? `Next mimic in ${timeLeft}s`
+                  : `Leaderboard in ${timeLeft}s`
                 }
               </p>
             )}
@@ -668,8 +750,8 @@ export default function SoundReveal({ roomState, onNextSound, onFinishAllSounds,
         )}
 
         {stage !== 'SCORE_REVEALED' && !isHost && (
-          <p style={{ margin: '0.4rem 0 0', color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
-            <IconHeadphones size={14} /> Listening to playback... (Voice chat will resume right after)
+          <p style={{ margin: '0.35rem 0 0', color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', justifyContent: 'center' }}>
+            <IconHeadphones size={13} /> Listening to playback...
           </p>
         )}
       </div>

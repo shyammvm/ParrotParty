@@ -999,33 +999,74 @@ body.game-mode-active .round-length-box {
 }
 
 /* ── Sound Pack Menu (Prompt Selector) ────────────────────────────────────── */
+.prompt-selector-card {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  max-height: calc(100dvh - 100px);
+  overflow: hidden;
+}
+
+@media (max-width: 680px) {
+  .prompt-selector-card {
+    padding: 0.65rem 0.75rem 0.4rem 0.75rem !important;
+    max-height: calc(100dvh - 80px);
+  }
+}
+
+.prompt-selector-pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding-right: 0.2rem;
+  padding-bottom: 0.75rem;
+  flex: 1 1 auto;
+  min-height: 120px;
+}
+
+.prompt-selector-action-bar {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-card);
+  padding-top: 0.55rem;
+  padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+  margin-top: auto;
+  border-top: 1.5px solid var(--border-color);
+  z-index: 30;
+  box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.04);
+}
+
 .round-length-box {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--bg-card-2);
   border: 1.5px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 0.75rem 1.1rem;
-  margin-bottom: 1.25rem;
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.85rem;
+  margin-bottom: 0.65rem;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .round-length-pill-group {
   display: flex;
   gap: 0.4rem;
   background: rgba(45, 32, 22, 0.05);
-  padding: 0.25rem;
-  border-radius: 12px;
+  padding: 0.2rem;
+  border-radius: 10px;
   border: 1px solid var(--border-color);
 }
 
 .sound-pack-card {
-  padding: 1.15rem 1.25rem;
+  padding: 0.65rem 0.85rem;
   background: var(--bg-card-2);
   border: 1.5px solid var(--border-color);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   position: relative;
 }
@@ -1707,5 +1748,275 @@ body.game-mode-active .round-length-box {
   align-items: center !important;
   gap: 0.25rem !important;
 }
+
+/* ── SCORE EFFECTS OVERLAY: EGG THROWING (<25) & HIGH SCORE CELEBRATION (75+) ── */
+.score-effects-overlay {
+  transition: box-shadow 0.5s ease;
+}
+
+.score-effects-overlay.golden-celebration-active {
+  box-shadow: 0 0 35px rgba(245, 158, 11, 0.35), inset 0 0 25px rgba(245, 158, 11, 0.2);
+  border: 2px solid rgba(245, 158, 11, 0.6);
+  animation: goldenAuraPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes goldenAuraPulse {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.3), inset 0 0 15px rgba(245, 158, 11, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 45px rgba(245, 158, 11, 0.55), inset 0 0 30px rgba(245, 158, 11, 0.3);
+  }
+}
+
+/* ── Flying Egg Projectile ── */
+.flying-egg-projectile {
+  pointer-events: none;
+  animation: eggFlyTrajectory 0.46s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.egg-shell-graphic {
+  animation: eggSpinWobble 0.46s linear infinite;
+  transform-origin: center center;
+}
+
+@keyframes eggFlyTrajectory {
+  0% {
+    transform: translate(0, 0) scale(1.35);
+    opacity: 0.95;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--target-x), var(--target-y)) scale(0.95);
+    opacity: 0;
+  }
+}
+
+@keyframes eggSpinWobble {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(540deg);
+  }
+}
+
+/* ── Egg Splat Decal & Drips ── */
+.egg-splat-container {
+  pointer-events: none;
+  animation: splatPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+             splatFadeOut 0.8s ease-in 3.7s forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes splatPopIn {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes splatFadeOut {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+}
+
+.egg-splat-graphic {
+  position: relative;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.22));
+}
+
+/* Viscous sliding yolk drip */
+.yolk-drip-stream {
+  position: absolute;
+  background: linear-gradient(to bottom, #ffb300, #ff8f00);
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 3px 6px rgba(230, 81, 0, 0.3);
+  height: 0;
+  animation: dripSlide 2.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  will-change: height, opacity;
+}
+
+.yolk-drip-stream::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 130%;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff8f00;
+  box-shadow: 0 2px 4px rgba(230, 81, 0, 0.4);
+}
+
+@keyframes dripSlide {
+  0% {
+    height: 0;
+    opacity: 0.95;
+  }
+  50% {
+    height: var(--drip-length, 30px);
+    opacity: 0.95;
+  }
+  85% {
+    height: calc(var(--drip-length, 30px) + 8px);
+    opacity: 0.9;
+  }
+  100% {
+    height: calc(var(--drip-length, 30px) + 12px);
+    opacity: 0.8;
+  }
+}
+
+/* Comic Text Bubble for Splat */
+.splat-comic-bubble {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-8deg);
+  background: #ffee55;
+  color: #c62828;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.88rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  border: 2px solid #212121;
+  box-shadow: 2.5px 2.5px 0 #212121;
+  white-space: nowrap;
+  animation: comicBubblePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  z-index: 60;
+  letter-spacing: 0.5px;
+}
+
+@keyframes comicBubblePop {
+  0% {
+    transform: translateX(-50%) rotate(-8deg) scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(-50%) rotate(-12deg) scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) rotate(-8deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── HIGH SCORE CELEBRATIONS (75+) ── */
+.floating-celebration-item {
+  pointer-events: none;
+  animation: floatCelebrationUp 2.8s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+  z-index: 52;
+  will-change: transform, opacity;
+}
+
+@keyframes floatCelebrationUp {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-50px) rotate(15deg) scale(1.15);
+  }
+  75% {
+    opacity: 0.95;
+    transform: translateY(-240px) rotate(-15deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-340px) rotate(25deg) scale(0.85);
+  }
+}
+
+.celebration-comic-badge {
+  pointer-events: none;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 900;
+  padding: 0.4rem 1.1rem;
+  border-radius: 25px;
+  border: 3px solid #ffffff;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.45), 0 0 0 2px #d97706, 0 3px 6px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  animation: celebrationBadgePop 2.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes celebrationBadgePop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.1) rotate(-10deg);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1.18) rotate(4deg);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -75%) scale(0.85) rotate(-5deg);
+    opacity: 0;
+  }
+}
+
+/* Interactive reaction buttons for egg throwing / confetti */
+.btn-egg-throw {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%) !important;
+  border: 1.5px solid #fdba74 !important;
+  color: #c2410c !important;
+  font-weight: 800 !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.btn-egg-throw:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25) !important;
+}
+
+.btn-confetti-pop {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  border: 1.5px solid #f59e0b !important;
+  color: #b45309 !important;
+  font-weight: 800 !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.btn-confetti-pop:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+}
+
 
 

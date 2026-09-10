@@ -1,15 +1,34 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { getAudioContext, scoreAudioComparison } from '../utils/audioAnalyzer';
-import { bufferToWavBlob } from '../utils/soundLibrary';
+import { bufferToWavBlob, padAudioBuffer } from '../utils/soundLibrary';
 import { blobToDataURL, dataURLToBlob, fetchOrDataUrlToBlob, peerManager } from '../utils/peerManager';
 import { audioDeviceManager } from '../utils/audioDeviceManager';
 import { voiceChatManager } from '../utils/voiceChatManager';
+import { preloadAudio } from '../utils/audioPlayer';
 import { PlayerAvatar } from '../utils/avatarUtils';
-import WaveformDisplay from './WaveformDisplay';
+import WaveformDisplay, { extractWaveformBars } from './WaveformDisplay';
 import ParrotMascot from './ParrotMascot';
 import { IconMic, IconVolume, IconSettings, IconCheck, IconWaveform, IconSparkles, IconUsers, IconFlame } from './Icons';
 
 const NUM_BARS = 120;
+const RECORD_SILENCE_PAD_SEC = 0.5;
+
+function createPaddedWaveformBars(rawBars, rawDuration, padSec = RECORD_SILENCE_PAD_SEC) {
+  if (!rawBars || rawBars.length === 0) return Array(NUM_BARS).fill(0.02);
+  const dur = Math.max(0.1, rawDuration || 3);
+  const totalDur = dur + padSec * 2;
+  const leadRatio = padSec / totalDur;
+  const leadBarsCount = Math.round(NUM_BARS * leadRatio);
+  const trailBarsCount = leadBarsCount;
+  const soundBarsCount = Math.max(1, NUM_BARS - leadBarsCount - trailBarsCount);
+
+  const result = Array(NUM_BARS).fill(0.02);
+  for (let i = 0; i < soundBarsCount; i++) {
+    const srcIdx = Math.min(rawBars.length - 1, Math.floor((i / soundBarsCount) * rawBars.length));
+    result[leadBarsCount + i] = rawBars[srcIdx];
+  }
+  return result;
+}
 
 export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings }) {
   const [phase, setPhase] = useState('IDLE'); // IDLE | COUNTDOWN | RECORDING | PROCESSING | DONE | MIC_ERROR
@@ -46,8 +65,35 @@ export default function RecordPhase({ roomState, onSoundComplete, onOpenSettings
   const soundPack = roomState?.soundPack || [];
   const currentSound = soundPack[currentSoundIndex] || soundPack[0];
   const totalSounds = soundPack.length || 5;
-  const targetDuration = currentSound?.duration || 5;
-  const targetBars = currentSound?.waveformBars || [];
+  const rawDuration = currentSound?.duration || 3;
+  const [activeTargetBars, setActiveTargetBars] = useState(() =>
+    createPaddedWaveformBars(currentSound?.waveformBars, rawDuration, RECORD_SILENCE_PAD_SEC)
+  );
+  const [activeTargetDuration, setActiveTargetDuration] = useState(() => rawDuration + RECORD_SILENCE_PAD_SEC * 2);
+
+  // Dynamically refine targetBars and targetDuration with 0.5s silence padding on each end
+  useEffect(() => {
+    const rawDur = currentSound?.duration || 3;
+    setActiveTargetBars(createPaddedWaveformBars(currentSound?.waveformBars, rawDur, RECORD_SILENCE_PAD_SEC));
+    setActiveTargetDuration(rawDur + RECORD_SILENCE_PAD_SEC * 2);
+
+    const demoSource = currentSound?.targetAudioUrl || currentSound?.soundUrl;
+    if (demoSource) {
+      preloadAudio(demoSource).then(buf => {
+        if (buf) {
+          const audioCtx = getAudioContext();
+          const paddedBuf = padAudioBuffer(audioCtx, buf, RECORD_SILENCE_PAD_SEC, RECORD_SILENCE_PAD_SEC);
+          const pcm = paddedBuf.getChannelData(0);
+          const freshBars = extractWaveformBars(pcm, NUM_BARS);
+          setActiveTargetBars(freshBars);
+          setActiveTargetDuration(paddedBuf.duration);
+        }
+      }).catch(() => {});
+    }
+  }, [currentSoundIndex, currentSound?.title, currentSound?.soundUrl]);
+
+  const targetDuration = activeTargetDuration;
+  const targetBars = activeTargetBars;
 
   const isHost = roomState?.isHost;
   const players = roomState?.players || [];

@@ -247,7 +247,7 @@ export default function Lobby({ roomState, onStartSelectPrompt, onOpenSettings, 
             border: '1.5px solid var(--border-color)'
           }}>
             <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>
-              Waiting for the host to pick a sound pack...
+              Waiting for game to start...
             </p>
           </div>
         )}

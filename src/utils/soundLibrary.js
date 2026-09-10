@@ -9,6 +9,7 @@
  */
 
 import { getAudioContext } from './audioAnalyzer.js';
+import { cacheAudioBuffer } from './audioPlayer.js';
 
 // Auto-scan all audio files inside public/sounds/ (and root sounds/ if present)
 const rawSoundModules = {
@@ -199,7 +200,7 @@ export function bufferToWavBlob(audioBuffer, targetSampleRate = 16000) {
   return new Blob([buffer], { type: 'audio/wav' });
 }
 
-export const DEFAULT_SILENCE_PADDING_SEC = 0.5;
+export const DEFAULT_SILENCE_PADDING_SEC = 0;
 
 /**
  * Pad an AudioBuffer with silence on both sides (lead-in and lead-out).
@@ -254,6 +255,10 @@ export async function loadSoundUrl(url, padLeadingSec = DEFAULT_SILENCE_PADDING_
   const arrayBuffer = await res.arrayBuffer();
   // Decode audio data (slice to prevent ArrayBuffer detachment issues)
   const rawAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+  cacheAudioBuffer(url, rawAudioBuffer);
+  cacheAudioBuffer(resolvedUrl, rawAudioBuffer);
+  cacheAudioBuffer(safeUrl, rawAudioBuffer);
+
   const audioBuffer = padAudioBuffer(audioCtx, rawAudioBuffer, padLeadingSec, padTrailingSec);
   const blob = bufferToWavBlob(audioBuffer);
 

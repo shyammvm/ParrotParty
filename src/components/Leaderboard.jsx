@@ -604,7 +604,7 @@ export default function Leaderboard({ roomState, onNextSound, onPlayAgain }) {
                 gap: '0.4rem'
               }}>
                 <IconClock size={14} color="var(--primary)" />
-                Next round starting in <strong>{timeLeft}s</strong> (or when host advances)...
+                Next round in <strong>{timeLeft}s</strong>
               </p>
             )}
           </div>
@@ -632,15 +632,15 @@ export default function Leaderboard({ roomState, onNextSound, onPlayAgain }) {
               <p style={{
                 textAlign: 'center',
                 color: 'var(--text-muted)',
-                fontSize: '0.86rem',
-                margin: '0.4rem 0',
+                fontSize: '0.82rem',
+                margin: '0.35rem 0',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.4rem'
+                gap: '0.35rem'
               }}>
-                <IconClock size={14} /> Waiting for host to start a new game...
+                <IconClock size={13} /> Waiting for next round...
               </p>
             )}
           </div>

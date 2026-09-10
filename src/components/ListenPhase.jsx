@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { playAudioDataUrl, stopCurrentAudio } from '../utils/audioPlayer';
+import { playAudioDataUrl, stopCurrentAudio, preloadAudio } from '../utils/audioPlayer';
 import { getAudioContext } from '../utils/audioAnalyzer';
 import { voiceChatManager } from '../utils/voiceChatManager';
 import { peerManager } from '../utils/peerManager';
 import { PlayerAvatar } from '../utils/avatarUtils';
-import WaveformDisplay from './WaveformDisplay';
+import WaveformDisplay, { extractWaveformBars } from './WaveformDisplay';
 import PhaseIntroOverlay from './PhaseIntroOverlay';
 import ParrotMascot from './ParrotMascot';
 import { IconPlay, IconVolume, IconLock, IconCheck, IconHeadphones, IconMic, IconClock, IconReplay, IconMusic, IconWaveform, IconUsers } from './Icons';
@@ -32,8 +32,26 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
   const currentSound = soundPack[currentSoundIndex] || soundPack[0];
   const totalSounds = soundPack.length || 5;
 
-  const bars = currentSound?.waveformBars || [];
-  const duration = currentSound?.duration || 3;
+  const [activeBars, setActiveBars] = useState(() => currentSound?.waveformBars || []);
+  const [activeDuration, setActiveDuration] = useState(() => currentSound?.duration || 3);
+
+  // Preload audio and verify exact waveform bars & duration (handles both new and existing rooms)
+  useEffect(() => {
+    setActiveBars(currentSound?.waveformBars || []);
+    setActiveDuration(currentSound?.duration || 3);
+
+    const demoSource = currentSound?.targetAudioUrl || currentSound?.soundUrl;
+    if (demoSource) {
+      preloadAudio(demoSource).then(buf => {
+        if (buf) {
+          setActiveDuration(buf.duration);
+          const pcm = buf.getChannelData(0);
+          const freshBars = extractWaveformBars(pcm, 120);
+          setActiveBars(freshBars);
+        }
+      }).catch(() => {});
+    }
+  }, [currentSoundIndex, currentSound?.title, currentSound?.soundUrl]);
 
   const listenPhaseStartTime = roomState?.listenPhaseStartTime;
   const listenReadyMap = roomState?.listenReadyMap || {};
@@ -53,26 +71,23 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
     setProgress(0);
     voiceChatManager.setAutoMuted('DEMO_PLAYBACK', true);
 
-    const audioCtx = getAudioContext();
-    if (audioCtx.state === 'suspended') {
-      try {
-        await audioCtx.resume();
-      } catch (e) { }
-    }
-
-    startTimeRef.current = audioCtx.currentTime;
-    const animateCursor = () => {
-      const elapsed = audioCtx.currentTime - startTimeRef.current;
-      const pct = Math.min(1, elapsed / duration);
-      setProgress(pct);
-      if (pct < 1 && isPlayingRef.current) {
-        animFrameRef.current = requestAnimationFrame(animateCursor);
-      }
-    };
-    animFrameRef.current = requestAnimationFrame(animateCursor);
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
 
     try {
-      await playAudioDataUrl(demoSource);
+      await playAudioDataUrl(demoSource, ({ audioCtx, startTime, duration: actualDuration }) => {
+        startTimeRef.current = startTime;
+        const soundDuration = actualDuration || activeDuration;
+        const animateCursor = () => {
+          if (!isPlayingRef.current) return;
+          const elapsed = audioCtx.currentTime - startTimeRef.current;
+          const pct = Math.min(1, Math.max(0, elapsed / soundDuration));
+          setProgress(pct);
+          if (pct < 1 && isPlayingRef.current) {
+            animFrameRef.current = requestAnimationFrame(animateCursor);
+          }
+        };
+        animFrameRef.current = requestAnimationFrame(animateCursor);
+      });
     } catch (err) {
       console.error('Play error:', err);
     } finally {
@@ -339,18 +354,18 @@ export default function ListenPhase({ roomState, onStartRecordingPhase }) {
             <IconWaveform size={13} color="#7c3aed" />
             <span>TARGET WAVEFORM</span>
           </span>
-          <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>{duration.toFixed(1)}s Sound</span>
+          <span style={{ color: 'var(--text-main)', fontWeight: 700 }}>{activeDuration.toFixed(1)}s Sound</span>
         </div>
         <WaveformDisplay
-          bars={bars}
+          bars={activeBars}
           progress={progress}
           color="#7c3aed"
           height={65}
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
           <span>0s</span>
-          <span>{(duration / 2).toFixed(1)}s</span>
-          <span>{duration.toFixed(1)}s</span>
+          <span>{(activeDuration / 2).toFixed(1)}s</span>
+          <span>{activeDuration.toFixed(1)}s</span>
         </div>
       </div>
 

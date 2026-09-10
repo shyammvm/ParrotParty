@@ -85,9 +85,13 @@ export default function ParrotMascot({
           width: size,
           height: size,
           borderRadius: '50%',
-          border: `2.5px solid ${isListen ? '#8b5cf6' : isRecord ? '#f43f5e' : '#f59e0b'}`,
-          background: 'linear-gradient(145deg, #ffffff, #fff5eb)',
-          boxShadow: `0 3px 10px ${isListen ? 'rgba(139, 92, 246, 0.35)' : isRecord ? 'rgba(244, 63, 94, 0.35)' : 'rgba(245, 158, 11, 0.35)'}`,
+          border: `2px solid ${isListen ? 'rgba(139, 92, 246, 0.5)' : isRecord ? 'rgba(244, 63, 94, 0.5)' : 'rgba(245, 158, 11, 0.5)'}`,
+          background: isListen
+            ? 'radial-gradient(circle, rgba(139, 92, 246, 0.14) 0%, rgba(139, 92, 246, 0.03) 100%)'
+            : isRecord
+              ? 'radial-gradient(circle, rgba(244, 63, 94, 0.14) 0%, rgba(244, 63, 94, 0.03) 100%)'
+              : 'radial-gradient(circle, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.03) 100%)',
+          boxShadow: `0 3px 12px ${isListen ? 'rgba(139, 92, 246, 0.3)' : isRecord ? 'rgba(244, 63, 94, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -107,10 +111,10 @@ export default function ParrotMascot({
           src={parrotLogo}
           alt="Parrot Party Mascot"
           style={{
-            width: '85%',
-            height: '85%',
+            width: '90%',
+            height: '90%',
             objectFit: 'contain',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))'
+            filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.18))'
           }}
           onError={(e) => {
             e.currentTarget.src = `${import.meta.env.BASE_URL}images/parrot-party.png`;

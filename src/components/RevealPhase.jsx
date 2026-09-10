@@ -3,6 +3,7 @@ import { playAudioDataUrl, stopCurrentAudio } from '../utils/audioPlayer';
 import { getFunnyTitle } from '../utils/audioAnalyzer';
 import { PlayerAvatar } from '../utils/avatarUtils';
 import { IconTrophy, IconCrown, IconVolume, IconMic, IconSparkles, IconArrowRight } from './Icons';
+import ScoreEffectsOverlay from './ScoreEffectsOverlay';
 
 export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard }) {
   const [stage, setStage] = useState('IDLE'); // 'TARGET_PLAYING' | 'PLAYER_PLAYING' | 'SCORE_REVEALED' | 'PAUSED'
@@ -106,9 +107,15 @@ export default function RevealPhase({ roomState, onNextReveal, onGoToLeaderboard
 
   const totalSteps = players.length * totalSounds;
   const isLastStep = currentRevealIndex >= totalSteps - 1;
+  const cardRef = useRef(null);
 
   return (
-    <div className="card">
+    <div ref={cardRef} className="card" style={{ position: 'relative', overflow: 'hidden' }}>
+      <ScoreEffectsOverlay
+        score={currentScore}
+        isActive={stage === 'SCORE_REVEALED'}
+        containerRef={cardRef}
+      />
       {/* 🏆 LIVE LEADERBOARD AT THE TOP */}
       <div style={{
         background: 'rgba(0, 0, 0, 0.4)',
